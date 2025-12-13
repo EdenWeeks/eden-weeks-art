@@ -10,7 +10,7 @@ import { ArrowLeft, Bitcoin } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // Eden's npub: npub1enuxqa5g0cggf849yqzd53nu0x28w69sk6xzpx2q4ej75r8tuz2sh9l3eu
-const EDEN_PUBKEY = '971615b70ad9ec896f8d5ba0f2d01652f1dfe5f9ced81ac9469ca7facefad68b';
+const EDEN_PUBKEY = 'ce8e01d1a42f9985d7a8900d2a79e5eaf75d305981001c9d4ae94fec1ff865e1';
 
 const ProductDetail = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -31,9 +31,9 @@ const ProductDetail = () => {
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <Link to="/" className="flex items-center gap-3">
-                <img 
-                  src="/logo.jpg" 
-                  alt="Eden Weeks Logo" 
+                <img
+                  src="/logo.jpg"
+                  alt="Eden Weeks Logo"
                   className="h-12 w-auto"
                 />
                 <span className="font-serif text-2xl font-bold text-foreground hidden sm:inline">
@@ -71,9 +71,9 @@ const ProductDetail = () => {
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <Link to="/" className="flex items-center gap-3">
-                <img 
-                  src="/logo.jpg" 
-                  alt="Eden Weeks Logo" 
+                <img
+                  src="/logo.jpg"
+                  alt="Eden Weeks Logo"
                   className="h-12 w-auto"
                 />
                 <span className="font-serif text-2xl font-bold text-foreground hidden sm:inline">
@@ -117,9 +117,9 @@ const ProductDetail = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3 group">
-              <img 
-                src="/logo.jpg" 
-                alt="Eden Weeks Logo" 
+              <img
+                src="/logo.jpg"
+                alt="Eden Weeks Logo"
                 className="h-12 w-auto transition-transform group-hover:scale-105"
               />
               <span className="font-serif text-2xl font-bold text-foreground hidden sm:inline">
@@ -194,7 +194,7 @@ const ProductDetail = () => {
               <h1 className="font-serif text-4xl sm:text-5xl font-bold text-foreground mb-4">
                 {product.data.name}
               </h1>
-              
+
               <div className="flex items-baseline gap-3 mb-6">
                 <span className="text-4xl font-bold text-foreground">
                   {product.data.price.toLocaleString()}
@@ -205,11 +205,11 @@ const ProductDetail = () => {
               </div>
 
               {product.data.quantity !== null && (
-                <Badge 
+                <Badge
                   variant={isAvailable ? "default" : "secondary"}
                   className="text-sm"
                 >
-                  {isAvailable 
+                  {isAvailable
                     ? `${product.data.quantity} available`
                     : 'Out of stock'}
                 </Badge>
@@ -248,13 +248,13 @@ const ProductDetail = () => {
               <Alert>
                 <Bitcoin className="h-4 w-4" />
                 <AlertDescription>
-                  This artwork is available for purchase with Bitcoin. 
+                  This artwork is available for purchase with Bitcoin.
                   Contact Eden directly to arrange payment and shipping.
                 </AlertDescription>
               </Alert>
 
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="w-full text-lg"
                 disabled={!isAvailable}
               >
@@ -274,27 +274,27 @@ const ProductDetail = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-center space-y-6">
             <div className="flex items-center gap-3">
-              <img 
-                src="/logo.jpg" 
-                alt="Eden Weeks Logo" 
+              <img
+                src="/logo.jpg"
+                alt="Eden Weeks Logo"
                 className="h-12 w-auto brightness-0 invert"
               />
               <span className="font-serif text-2xl font-bold">
                 Eden Weeks
               </span>
             </div>
-            
+
             <p className="text-purple-200 text-center max-w-md">
-              Young artist from Cambridgeshire, England. Creating original artwork 
+              Young artist from Cambridgeshire, England. Creating original artwork
               and custom commissions with passion.
             </p>
 
             <div className="flex items-center gap-2 text-sm text-purple-300">
               <span>Powered by Nostr & Bitcoin</span>
               <span>•</span>
-              <a 
-                href="https://shakespeare.diy" 
-                target="_blank" 
+              <a
+                href="https://shakespeare.diy"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-white transition-colors underline"
               >

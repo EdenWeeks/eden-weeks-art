@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { ShoppingBag, Palette, Heart } from 'lucide-react';
 
 // Eden's npub: npub1enuxqa5g0cggf849yqzd53nu0x28w69sk6xzpx2q4ej75r8tuz2sh9l3eu
-const EDEN_PUBKEY = '971615b70ad9ec896f8d5ba0f2d01652f1dfe5f9ced81ac9469ca7facefad68b';
+const EDEN_PUBKEY = 'ce8e01d1a42f9985d7a8900d2a79e5eaf75d305981001c9d4ae94fec1ff865e1';
 const STALL_ID = 'ic5HtZ7CBy7JZPPFs36Kas';
 
 const Index = () => {
@@ -26,25 +26,25 @@ const Index = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3 group">
-              <img 
-                src="/logo.jpg" 
-                alt="Eden Weeks Logo" 
+              <img
+                src="/logo.jpg"
+                alt="Eden Weeks Logo"
                 className="h-12 w-auto transition-transform group-hover:scale-105"
               />
               <span className="font-serif text-2xl font-bold text-foreground hidden sm:inline">
                 Eden Weeks
               </span>
             </Link>
-            
+
             <div className="flex items-center gap-6">
-              <a 
-                href="#about" 
+              <a
+                href="#about"
                 className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
                 About
               </a>
-              <a 
-                href="#shop" 
+              <a
+                href="#shop"
                 className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
                 Shop
@@ -63,23 +63,23 @@ const Index = () => {
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-purple-200/20 via-transparent to-transparent"></div>
-        
+
         <div className="container mx-auto px-4 py-24 relative">
           <div className="max-w-4xl mx-auto text-center space-y-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 backdrop-blur border border-purple-200 text-sm font-medium text-purple-700 mb-4">
               <Palette className="w-4 h-4" />
               Young Artist from Cambridgeshire, England
             </div>
-            
+
             <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl font-bold text-foreground leading-tight">
               Bringing Your
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500">
                 {' '}Vision to Life
               </span>
             </h1>
-            
+
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Original artwork, custom commissions, and creative experimentation. 
+              Original artwork, custom commissions, and creative experimentation.
               Join me on my journey to become a successful artist.
             </p>
 
@@ -122,25 +122,25 @@ const Index = () => {
                   <p className="text-foreground font-medium text-xl">
                     Hello! I'm Eden, a young artist based in Cambridgeshire, England.
                   </p>
-                  
+
                   <p>
-                    I have always had a passion to be creative and have loved to draw and paint ever 
-                    since I can remember. Join me on my journey to become a successful artist as I 
+                    I have always had a passion to be creative and have loved to draw and paint ever
+                    since I can remember. Join me on my journey to become a successful artist as I
                     set up my small business.
                   </p>
-                  
+
                   <p>
-                    At the moment, the majority of my work is animal-based, consisting of mainly pets. 
-                    However, I love to do portraiture as it can often be a challenge but is extremely 
-                    rewarding. Within my art, experimentation is always key. As I am not too experienced, 
+                    At the moment, the majority of my work is animal-based, consisting of mainly pets.
+                    However, I love to do portraiture as it can often be a challenge but is extremely
+                    rewarding. Within my art, experimentation is always key. As I am not too experienced,
                     I love to throw myself in at the deep end and try things I haven't done before.
                   </p>
-                  
+
                   <div className="pt-6 space-y-4">
                     <h3 className="font-serif text-2xl font-bold text-foreground">
                       What I Offer
                     </h3>
-                    
+
                     <ul className="space-y-3">
                       <li className="flex items-start gap-3">
                         <Badge className="mt-1 bg-purple-100 text-purple-700 hover:bg-purple-200">
@@ -198,7 +198,7 @@ const Index = () => {
           ) : products && products.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {products.map((product) => (
-                <Card 
+                <Card
                   key={product.data.id}
                   className="group overflow-hidden hover:shadow-2xl transition-all duration-300 border-border/50"
                 >
@@ -222,18 +222,18 @@ const Index = () => {
                       <Palette className="w-16 h-16 text-purple-300" />
                     </div>
                   )}
-                  
+
                   <CardContent className="p-6 space-y-2">
                     <h3 className="font-serif text-xl font-bold text-foreground group-hover:text-primary transition-colors">
                       {product.data.name}
                     </h3>
-                    
+
                     {product.data.description && (
                       <p className="text-sm text-muted-foreground line-clamp-2">
                         {product.data.description}
                       </p>
                     )}
-                    
+
                     <div className="flex items-baseline gap-2 pt-2">
                       <span className="text-2xl font-bold text-foreground">
                         {product.data.price.toLocaleString()}
@@ -245,7 +245,7 @@ const Index = () => {
 
                     {product.data.quantity !== null && (
                       <p className="text-xs text-muted-foreground">
-                        {product.data.quantity > 0 
+                        {product.data.quantity > 0
                           ? `${product.data.quantity} available`
                           : 'Out of stock'}
                       </p>
@@ -253,7 +253,7 @@ const Index = () => {
                   </CardContent>
 
                   <CardFooter className="p-6 pt-0">
-                    <Button 
+                    <Button
                       className="w-full group-hover:shadow-lg transition-shadow"
                       disabled={product.data.quantity !== null && product.data.quantity <= 0}
                       asChild
@@ -286,27 +286,27 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-center space-y-6">
             <div className="flex items-center gap-3">
-              <img 
-                src="/logo.jpg" 
-                alt="Eden Weeks Logo" 
+              <img
+                src="/logo.jpg"
+                alt="Eden Weeks Logo"
                 className="h-12 w-auto brightness-0 invert"
               />
               <span className="font-serif text-2xl font-bold">
                 Eden Weeks
               </span>
             </div>
-            
+
             <p className="text-purple-200 text-center max-w-md">
-              Young artist from Cambridgeshire, England. Creating original artwork 
+              Young artist from Cambridgeshire, England. Creating original artwork
               and custom commissions with passion.
             </p>
 
             <div className="flex items-center gap-2 text-sm text-purple-300">
               <span>Powered by Nostr & Bitcoin</span>
               <span>•</span>
-              <a 
-                href="https://shakespeare.diy" 
-                target="_blank" 
+              <a
+                href="https://shakespeare.diy"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-white transition-colors underline"
               >
