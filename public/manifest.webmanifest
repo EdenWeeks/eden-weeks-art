@@ -1,0 +1,16 @@
+{
+  "name": "Eden Weeks Art",
+  "short_name": "Eden Weeks",
+  "description": "Portfolio and marketplace for Eden Weeks, a young artist from Cambridgeshire, England",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#9333ea",
+  "icons": [
+    {
+      "src": "/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

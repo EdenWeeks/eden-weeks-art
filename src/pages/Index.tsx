@@ -5,10 +5,11 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 import { ShoppingBag, Palette, Heart } from 'lucide-react';
 
 // Eden's npub: npub1enuxqa5g0cggf849yqzd53nu0x28w69sk6xzpx2q4ej75r8tuz2sh9l3eu
-const EDEN_PUBKEY = 'ce8e01d1a42f9985d7a8900d2a79e5eaf75d305981001c9d4ae94fec1ff865e1';
+const EDEN_PUBKEY = 'ccf86076887e10849ea52004da467c79947768b0b68c209940ae65ea0cebe095';
 const STALL_ID = 'ic5HtZ7CBy7JZPPFs36Kas';
 
 const Index = () => {
@@ -97,6 +98,48 @@ const Index = () => {
                 </a>
               </Button>
             </div>
+
+            {/* Artwork Preview Carousel */}
+            {products && products.length > 0 && (
+              <div className="pt-12 w-full max-w-3xl mx-auto">
+                <Carousel
+                  opts={{
+                    align: "center",
+                    loop: true,
+                  }}
+                  className="w-full"
+                >
+                  <CarouselContent className="-ml-2 md:-ml-4">
+                    {products.slice(0, 6).map((product) => (
+                      <CarouselItem key={product.data.id} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3">
+                        <Link to={`/product/${product.data.id}`} className="block">
+                          <div className="relative aspect-square rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group">
+                            {product.data.images && product.data.images.length > 0 ? (
+                              <img
+                                src={product.data.images[0]}
+                                alt={product.data.name}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
+                                <Palette className="w-8 h-8 text-purple-300" />
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <div className="absolute bottom-3 left-3 right-3">
+                                <p className="text-white text-sm font-medium truncate">{product.data.name}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="left-0 md:-left-12 bg-white/80 hover:bg-white" />
+                  <CarouselNext className="right-0 md:-right-12 bg-white/80 hover:bg-white" />
+                </Carousel>
+              </div>
+            )}
           </div>
         </div>
 
@@ -118,10 +161,18 @@ const Index = () => {
 
             <Card className="border-none shadow-lg overflow-hidden">
               <CardContent className="p-8 sm:p-12">
-                <div className="space-y-6 text-lg text-muted-foreground leading-relaxed">
-                  <p className="text-foreground font-medium text-xl">
-                    Hello! I'm Eden, a young artist based in Cambridgeshire, England.
-                  </p>
+                <div className="flex flex-col md:flex-row gap-8 md:gap-12">
+                  <div className="flex-shrink-0 mx-auto md:mx-0">
+                    <img
+                      src="/eden-weeks.webp"
+                      alt="Eden Weeks"
+                      className="w-48 h-48 md:w-64 md:h-64 rounded-2xl object-cover shadow-lg"
+                    />
+                  </div>
+                  <div className="space-y-6 text-lg text-muted-foreground leading-relaxed">
+                    <p className="text-foreground font-medium text-xl">
+                      Hello! I'm Eden, a young artist based in Cambridgeshire, England.
+                    </p>
 
                   <p>
                     I have always had a passion to be creative and have loved to draw and paint ever
@@ -161,6 +212,7 @@ const Index = () => {
                         <span>In-person experience days (coming soon!) where you can paint/draw with me</span>
                       </li>
                     </ul>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -203,11 +255,11 @@ const Index = () => {
                   className="group overflow-hidden hover:shadow-2xl transition-all duration-300 border-border/50"
                 >
                   {product.data.images && product.data.images.length > 0 ? (
-                    <div className="relative aspect-square overflow-hidden bg-muted">
+                    <div className="relative aspect-square overflow-hidden">
                       <img
                         src={product.data.images[0]}
                         alt={product.data.name}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        className="absolute inset-0 w-full h-full object-cover scale-125 transition-transform duration-500 group-hover:scale-150"
                       />
                       {product.data.quantity !== null && product.data.quantity <= 0 && (
                         <div className="absolute inset-0 bg-black/60 flex items-center justify-center">

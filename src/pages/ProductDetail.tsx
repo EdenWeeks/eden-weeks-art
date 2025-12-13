@@ -10,7 +10,7 @@ import { ArrowLeft, Bitcoin } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // Eden's npub: npub1enuxqa5g0cggf849yqzd53nu0x28w69sk6xzpx2q4ej75r8tuz2sh9l3eu
-const EDEN_PUBKEY = 'ce8e01d1a42f9985d7a8900d2a79e5eaf75d305981001c9d4ae94fec1ff865e1';
+const EDEN_PUBKEY = 'ccf86076887e10849ea52004da467c79947768b0b68c209940ae65ea0cebe095';
 
 const ProductDetail = () => {
   const { productId } = useParams<{ productId: string }>();
