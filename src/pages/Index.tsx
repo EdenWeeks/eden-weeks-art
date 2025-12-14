@@ -349,7 +349,7 @@ const Index = () => {
 
             <div className="flex items-center gap-2 text-sm text-violet-600">
               <span>Powered by Nostr & Bitcoin</span>
-              <span>•</span>
+              <span>|</span>
               <a
                 href="https://shakespeare.diy"
                 target="_blank"
