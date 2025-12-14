@@ -1,5 +1,6 @@
 import { useSeoMeta } from '@unhead/react';
 import { Link } from 'react-router-dom';
+import { Masonry } from 'react-plock';
 import { useProducts } from '@/hooks/useProducts';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,49 +26,76 @@ const Index = () => {
       <NavBar />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-violet-50 via-indigo-50 to-rose-50">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-violet-200/20 via-transparent to-transparent"></div>
+      <section className="relative overflow-hidden min-h-[80vh] flex items-center">
+        {/* Masonry Background */}
+        {products && products.length > 0 && (() => {
+          const allImages = products.flatMap(p => p.data.images || []);
+          // Repeat images to fill grid
+          const repeatedImages = Array.from({ length: 32 }, (_, i) => allImages[i % allImages.length]);
+          return (
+            <div className="absolute inset-0 overflow-hidden">
+              <Masonry
+                items={repeatedImages}
+                config={{
+                  columns: [4, 6, 8],
+                  gap: [0, 0, 0],
+                  media: [640, 768, 1024],
+                }}
+                render={(item, idx) => (
+                  <img
+                    key={idx}
+                    src={item}
+                    alt=""
+                    className="w-full grayscale"
+                  />
+                )}
+              />
+            </div>
+          );
+        })()}
 
-        <div className="container mx-auto px-4 py-24 relative">
+        {/* Fallback gradient if no products */}
+        {(!products || products.length === 0) && (
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-50 via-indigo-50 to-rose-50" />
+        )}
+
+        <div className="container mx-auto px-4 py-24 relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 backdrop-blur border border-violet-200 text-sm font-medium text-violet-700 mb-4">
-              <Palette className="w-4 h-4" />
-              Young Artist from Cambridgeshire, England
+            <div className="bg-white/70 backdrop-blur-md rounded-3xl p-8 md:p-12 shadow-xl">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-100 border border-violet-200 text-sm font-medium text-violet-700 mb-6">
+                <Palette className="w-4 h-4" />
+                Young Artist from Cambridgeshire, England
+              </div>
+
+              <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6">
+                Bringing Your
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-amber-400 to-yellow-400">
+                  {' '}Vision to Life
+                </span>
+              </h1>
+
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-8">
+                Original artwork, custom commissions, and creative experimentation.
+                Join me on my journey to become a successful artist.
+              </p>
+
+              <div className="flex flex-wrap items-center justify-center gap-4">
+                <Button size="lg" className="text-base" asChild>
+                  <a href="#shop">
+                    <ShoppingBag className="w-5 h-5 mr-2" />
+                    Explore Artwork
+                  </a>
+                </Button>
+                <Button size="lg" variant="outline" className="text-base bg-white/80" asChild>
+                  <Link to="/my-story">
+                    <Heart className="w-5 h-5 mr-2" />
+                    My Story
+                  </Link>
+                </Button>
+              </div>
             </div>
-
-            <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl font-bold text-foreground leading-tight">
-              Bringing Your
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-amber-400 to-yellow-400">
-                {' '}Vision to Life
-              </span>
-            </h1>
-
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Original artwork, custom commissions, and creative experimentation.
-              Join me on my journey to become a successful artist.
-            </p>
-
-            <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-              <Button size="lg" className="text-base" asChild>
-                <a href="#shop">
-                  <ShoppingBag className="w-5 h-5 mr-2" />
-                  Explore Artwork
-                </a>
-              </Button>
-              <Button size="lg" variant="outline" className="text-base" asChild>
-                <Link to="/my-story">
-                  <Heart className="w-5 h-5 mr-2" />
-                  My Story
-                </Link>
-              </Button>
-            </div>
-
           </div>
         </div>
-
-        {/* Decorative elements */}
-        <div className="absolute top-20 left-10 w-32 h-32 bg-violet-300/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-10 w-40 h-40 bg-rose-300/20 rounded-full blur-3xl"></div>
       </section>
 
       {/* About Section */}
