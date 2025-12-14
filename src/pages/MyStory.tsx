@@ -192,6 +192,36 @@ const MyStory = () => {
               and custom commissions with passion.
             </p>
 
+            <div className="flex items-center gap-4">
+              <a
+                href="https://primal.net/p/nprofile1qqsve7rqw6y8uyyyn6jjqpx6ge78n9rhdzctdrpqn9q2ue02pn47p9gqlc40f"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:opacity-80 transition-opacity"
+                title="Follow on Nostr"
+              >
+                <img src="/nostr-logo.png" alt="Nostr" className="h-8 w-auto" />
+              </a>
+              <a
+                href="https://instagram.com/edenjennifer.artist"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:opacity-80 transition-opacity"
+                title="Follow on Instagram"
+              >
+                <img src="/instagram-logo.png" alt="Instagram" className="h-8 w-auto" />
+              </a>
+              <a
+                href="https://github.com/edenweeks"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:opacity-80 transition-opacity"
+                title="View GitHub"
+              >
+                <img src="/github-logo.png" alt="GitHub" className="h-8 w-auto" />
+              </a>
+            </div>
+
             <div className="flex items-center gap-2 text-sm text-violet-600">
               <span>Powered by Nostr & Bitcoin</span>
               <span>|</span>
