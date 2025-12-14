@@ -96,3 +96,4 @@ See `docs/` for implementation patterns:
 - Use `TestApp` wrapper component for context providers
 - Run `npm run test` after all code changes
 - Do not write new tests unless explicitly requested
+- Always check gh runs after pushing

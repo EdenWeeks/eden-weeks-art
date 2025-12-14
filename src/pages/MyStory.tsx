@@ -1,27 +1,47 @@
+import { useMemo } from 'react';
 import { useSeoMeta } from '@unhead/react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { usePosts } from '@/hooks/usePosts';
 import { useAuthor } from '@/hooks/useAuthor';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { NoteContent } from '@/components/NoteContent';
 import { NavBar } from '@/components/NavBar';
 import { ZapButton } from '@/components/ZapButton';
-import { ArrowLeft, Heart } from 'lucide-react';
+import { ArrowLeft, Heart, X } from 'lucide-react';
 
 const EDEN_PUBKEY = import.meta.env.VITE_EDEN_PUBKEY;
 
 const MyStory = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tagFilter = searchParams.get('tag');
+
   useSeoMeta({
-    title: 'My Story - Eden Weeks Art',
+    title: tagFilter ? `#${tagFilter} - Eden Weeks Art` : 'My Story - Eden Weeks Art',
     description: 'Follow Eden Weeks\' artistic journey through her posts and updates on Nostr.',
   });
 
   const { data: posts, isLoading } = usePosts(EDEN_PUBKEY, 50, { excludeReplies: true, mediaOnly: true });
   const { data: author } = useAuthor(EDEN_PUBKEY);
+
+  // Filter posts by hashtag if a tag filter is active
+  const filteredPosts = useMemo(() => {
+    if (!posts || !tagFilter) return posts;
+    return posts.filter(post => {
+      // Check if post content contains the hashtag (case insensitive)
+      const regex = new RegExp(`#${tagFilter}\\b`, 'i');
+      return regex.test(post.content);
+    });
+  }, [posts, tagFilter]);
+
+  const clearFilter = () => {
+    searchParams.delete('tag');
+    setSearchParams(searchParams);
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -65,6 +85,27 @@ const MyStory = () => {
           </p>
         </div>
 
+        {/* Tag Filter Indicator */}
+        {tagFilter && (
+          <div className="max-w-2xl mx-auto mb-6">
+            <div className="flex items-center gap-2 p-3 bg-indigo-50 rounded-lg">
+              <span className="text-sm text-indigo-700">Filtering by:</span>
+              <Badge variant="secondary" className="bg-indigo-100 text-indigo-800">
+                #{tagFilter}
+              </Badge>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilter}
+                className="ml-auto h-7 px-2 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-100"
+              >
+                <X className="w-4 h-4 mr-1" />
+                Clear
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Posts Feed */}
         <div className="max-w-2xl mx-auto space-y-6">
           {isLoading ? (
@@ -82,8 +123,8 @@ const MyStory = () => {
                 </CardContent>
               </Card>
             ))
-          ) : posts && posts.length > 0 ? (
-            posts.map((post) => (
+          ) : filteredPosts && filteredPosts.length > 0 ? (
+            filteredPosts.map((post) => (
               <Card key={post.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">

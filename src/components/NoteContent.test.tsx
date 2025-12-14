@@ -93,13 +93,12 @@ describe('NoteContent', () => {
       </TestApp>
     );
 
-    const nostrHashtag = screen.getByRole('link', { name: '#nostr' });
-    const bitcoinHashtag = screen.getByRole('link', { name: '#bitcoin' });
-    
+    // Hashtags are now buttons that filter using search params
+    const nostrHashtag = screen.getByRole('button', { name: '#nostr' });
+    const bitcoinHashtag = screen.getByRole('button', { name: '#bitcoin' });
+
     expect(nostrHashtag).toBeInTheDocument();
     expect(bitcoinHashtag).toBeInTheDocument();
-    expect(nostrHashtag).toHaveAttribute('href', '/t/nostr');
-    expect(bitcoinHashtag).toHaveAttribute('href', '/t/bitcoin');
   });
 
   it('generates deterministic names for users without metadata and styles them differently', () => {

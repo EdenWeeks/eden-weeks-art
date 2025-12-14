@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { type NostrEvent } from '@nostrify/nostrify';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { nip19 } from 'nostr-tools';
 import { useAuthor } from '@/hooks/useAuthor';
 import { genUserName } from '@/lib/genUserName';
@@ -47,9 +47,13 @@ export function NoteContent({
       const [fullMatch, url, nostrPrefix, nostrData, hashtag] = match;
       const index = match.index;
 
-      // Add text before this match (preserve whitespace)
+      // Add text before this match
       if (index > lastIndex) {
-        parts.push(text.substring(lastIndex, index));
+        const textBefore = text.substring(lastIndex, index);
+        // Only add if it contains non-whitespace, or is a single space (for inline spacing)
+        if (textBefore.trim() || textBefore === ' ') {
+          parts.push(textBefore.trim() ? textBefore : ' ');
+        }
       }
 
       if (url) {
@@ -104,25 +108,22 @@ export function NoteContent({
           parts.push(fullMatch);
         }
       } else if (hashtag) {
-        // Handle hashtags
+        // Handle hashtags - use search params to filter on current page
         const tag = hashtag.slice(1); // Remove the #
         parts.push(
-          <Link
-            key={`hashtag-${keyCounter++}`}
-            to={`/t/${tag}`}
-            className="text-indigo-600 hover:underline font-medium"
-          >
-            {hashtag}
-          </Link>
+          <HashtagLink key={`hashtag-${keyCounter++}`} tag={tag} hashtag={hashtag} />
         );
       }
 
       lastIndex = index + fullMatch.length;
     }
 
-    // Add any remaining text (preserve whitespace)
+    // Add any remaining text (only if it has content)
     if (lastIndex < text.length) {
-      parts.push(text.substring(lastIndex));
+      const remaining = text.substring(lastIndex);
+      if (remaining.trim()) {
+        parts.push(remaining.trimEnd());
+      }
     }
 
     // If no special content was found, just use the plain text
@@ -229,5 +230,35 @@ function NostrMention({ pubkey }: { pubkey: string }) {
     >
       @{displayName}
     </Link>
+  );
+}
+
+// Helper component for hashtag links that use search params
+function HashtagLink({ tag, hashtag }: { tag: string; hashtag: string }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentTag = searchParams.get('tag');
+  const isActive = currentTag === tag;
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isActive) {
+      // Clear filter if clicking the same tag
+      searchParams.delete('tag');
+    } else {
+      searchParams.set('tag', tag);
+    }
+    setSearchParams(searchParams);
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      className={cn(
+        "font-medium hover:underline",
+        isActive ? "text-indigo-800 bg-indigo-100 px-1 rounded" : "text-indigo-600"
+      )}
+    >
+      {hashtag}
+    </button>
   );
 }
