@@ -9,9 +9,8 @@ import { Palette, Heart, ShoppingBag } from 'lucide-react';
 import { NavBar } from '@/components/NavBar';
 import { ZapButton } from '@/components/ZapButton';
 
-// Eden's npub: npub1enuxqa5g0cggf849yqzd53nu0x28w69sk6xzpx2q4ej75r8tuz2sh9l3eu
-const EDEN_PUBKEY = 'ccf86076887e10849ea52004da467c79947768b0b68c209940ae65ea0cebe095';
-const STALL_ID = 'ic5HtZ7CBy7JZPPFs36Kas';
+const EDEN_PUBKEY = import.meta.env.VITE_EDEN_PUBKEY;
+const STALL_ID = import.meta.env.VITE_STALL_ID;
 
 const Index = () => {
   useSeoMeta({

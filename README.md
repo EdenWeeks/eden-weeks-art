@@ -24,7 +24,7 @@ A beautiful, immersive portfolio and marketplace website for Eden Weeks, a young
 
 The site features:
 - Clean white background for an art gallery feel
-- Elegant purple and pink accent colors representing creativity
+- Soft lilac/indigo accent colors representing creativity
 - Beautiful typography combining Inter and Playfair Display fonts
 - Smooth animations and hover effects
 - Professional, Apple-level polish
@@ -107,14 +107,27 @@ This site integrates with Nostr using:
 
 Products are fetched directly from Nostr relays using Eden's public key, ensuring decentralized and censorship-resistant commerce.
 
+## Environment Variables
+
+Copy `.env.example` to `.env` and configure:
+
+```bash
+cp .env.example .env
+```
+
+| Variable | Description |
+|----------|-------------|
+| `VITE_EDEN_PUBKEY` | Artist's Nostr public key (hex format) |
+| `VITE_STALL_ID` | Marketplace stall ID from LNbits |
+
 ## Customization
 
 To customize for another artist:
 
-1. Update `EDEN_PUBKEY` in `src/pages/Index.tsx` and `src/pages/ProductDetail.tsx`
-2. Update `STALL_ID` in `src/pages/Index.tsx`
-3. Replace `/public/logo.jpg` with the artist's logo
-4. Update the "About Me" section content
+1. Update environment variables in `.env`
+2. Replace `/public/logo.jpg` with the artist's logo
+3. Replace `/public/eden-weeks.webp` with the artist's photo
+4. Update the "About Me" section content in `src/pages/Index.tsx`
 5. Customize colors in `src/index.css`
 
 ## Deployment

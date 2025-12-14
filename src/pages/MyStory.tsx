@@ -12,8 +12,7 @@ import { NavBar } from '@/components/NavBar';
 import { ZapButton } from '@/components/ZapButton';
 import { ArrowLeft, Heart } from 'lucide-react';
 
-// Eden's npub: npub1enuxqa5g0cggf849yqzd53nu0x28w69sk6xzpx2q4ej75r8tuz2sh9l3eu
-const EDEN_PUBKEY = 'ccf86076887e10849ea52004da467c79947768b0b68c209940ae65ea0cebe095';
+const EDEN_PUBKEY = import.meta.env.VITE_EDEN_PUBKEY;
 
 const MyStory = () => {
   useSeoMeta({

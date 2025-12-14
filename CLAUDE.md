@@ -4,11 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Eden Weeks Art is a portfolio and marketplace website for an artist, built on the Nostr protocol (NIP-15 Marketplace). The site showcases artwork and enables Bitcoin purchases through decentralized commerce.
+Eden Weeks Art is a portfolio and marketplace website for an artist, built on the Nostr protocol (NIP-15 Marketplace). The site showcases artwork and enables Bitcoin Lightning purchases through decentralized commerce.
 
-**Artist Information:**
-- Nostr npub: `npub1enuxqa5g0cggf849yqzd53nu0x28w69sk6xzpx2q4ej75r8tuz2sh9l3eu`
-- Stall ID: `ic5HtZ7CBy7JZPPFs36Kas`
+**Configuration:**
+Artist pubkey and stall ID are configured via environment variables in `.env`:
+- `VITE_EDEN_PUBKEY` - Artist's Nostr public key (hex format)
+- `VITE_STALL_ID` - Marketplace stall ID from LNbits
 
 ## Commands
 
@@ -38,8 +39,11 @@ npm run deploy
 ### Key Files
 - `src/App.tsx` - Provider setup (QueryClient, NostrProvider, etc.) - **read before modifying**
 - `src/AppRouter.tsx` - Route configuration - add new routes above the catch-all `*` route
+- `src/components/NavBar.tsx` - Reusable navigation bar used across all pages
 - `src/pages/Index.tsx` - Home page with product gallery
-- `src/pages/ProductDetail.tsx` - Individual product view
+- `src/pages/Gallery.tsx` - Masonry grid gallery of all artwork
+- `src/pages/MyStory.tsx` - Artist's posts/updates feed
+- `src/pages/ProductDetail.tsx` - Individual product view with checkout
 
 ### Nostr Integration
 - Kind 30017: Stall information (marketplace setup)
@@ -49,7 +53,9 @@ npm run deploy
 
 ### Custom Hooks
 - `useNostr` - Core Nostr queries (`nostr.query()`, `nostr.event()`)
-- `useStall` / `useProducts` - Marketplace data
+- `useStall` / `useProducts` - Marketplace data (NIP-15)
+- `usePosts` - Fetch author's kind 1 notes
+- `useCheckout` - NIP-15 order submission via encrypted DM
 - `useAuthor` - User profile data by pubkey
 - `useCurrentUser` - Logged-in user
 - `useNostrPublish` - Publish events to Nostr
