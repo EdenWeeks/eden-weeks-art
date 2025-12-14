@@ -139,6 +139,19 @@ const Index = () => {
                         />
                       </a>
                       <a
+                        href="https://instagram.com/edenjennifer.artist"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:opacity-80 transition-opacity"
+                        title="Follow me on Instagram"
+                      >
+                        <img
+                          src="/instagram-logo.png"
+                          alt="Follow me on Instagram"
+                          className="h-10 w-auto"
+                        />
+                      </a>
+                      <a
                         href="https://github.com/edenweeks"
                         target="_blank"
                         rel="noopener noreferrer"
