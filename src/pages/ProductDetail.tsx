@@ -1,22 +1,31 @@
 import { useSeoMeta } from '@unhead/react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useProduct } from '@/hooks/useProducts';
+import { useStall } from '@/hooks/useStall';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Bitcoin } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ArrowLeft, ShoppingBag } from 'lucide-react';
+import { NavBar } from '@/components/NavBar';
+import { CommentsSection } from '@/components/comments/CommentsSection';
+import { ZapButton } from '@/components/ZapButton';
+import { CheckoutDialog } from '@/components/CheckoutDialog';
 
 // Eden's npub: npub1enuxqa5g0cggf849yqzd53nu0x28w69sk6xzpx2q4ej75r8tuz2sh9l3eu
 const EDEN_PUBKEY = 'ccf86076887e10849ea52004da467c79947768b0b68c209940ae65ea0cebe095';
+
+// Stall ID for Eden's art shop
+const STALL_ID = 'ic5HtZ7CBy7JZPPFs36Kas';
 
 const ProductDetail = () => {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
   const { data: product, isLoading } = useProduct(EDEN_PUBKEY, productId || '');
+  const { data: stall } = useStall(EDEN_PUBKEY, STALL_ID);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   useSeoMeta({
     title: product ? `${product.data.name} - Eden Weeks Art` : 'Product - Eden Weeks Art',
@@ -26,23 +35,7 @@ const ProductDetail = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white">
-        {/* Navigation */}
-        <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-              <Link to="/" className="flex items-center gap-3">
-                <img
-                  src="/logo.jpg"
-                  alt="Eden Weeks Logo"
-                  className="h-12 w-auto"
-                />
-                <span className="font-serif text-2xl font-bold text-foreground hidden sm:inline">
-                  Eden Weeks
-                </span>
-              </Link>
-            </div>
-          </div>
-        </nav>
+        <NavBar />
 
         <div className="container mx-auto px-4 py-12">
           <Button variant="ghost" className="mb-8" onClick={() => navigate(-1)}>
@@ -67,22 +60,7 @@ const ProductDetail = () => {
   if (!product) {
     return (
       <div className="min-h-screen bg-white">
-        <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-              <Link to="/" className="flex items-center gap-3">
-                <img
-                  src="/logo.jpg"
-                  alt="Eden Weeks Logo"
-                  className="h-12 w-auto"
-                />
-                <span className="font-serif text-2xl font-bold text-foreground hidden sm:inline">
-                  Eden Weeks
-                </span>
-              </Link>
-            </div>
-          </div>
-        </nav>
+        <NavBar />
 
         <div className="container mx-auto px-4 py-12">
           <Button variant="ghost" className="mb-8" onClick={() => navigate(-1)}>
@@ -112,23 +90,7 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-3 group">
-              <img
-                src="/logo.jpg"
-                alt="Eden Weeks Logo"
-                className="h-12 w-auto transition-transform group-hover:scale-105"
-              />
-              <span className="font-serif text-2xl font-bold text-foreground hidden sm:inline">
-                Eden Weeks
-              </span>
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <NavBar />
 
       <div className="container mx-auto px-4 py-12">
         <Button variant="ghost" className="mb-8 hover:text-primary" onClick={() => navigate(-1)}>
@@ -179,7 +141,7 @@ const ProductDetail = () => {
                 )}
               </>
             ) : (
-              <div className="aspect-square rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
+              <div className="aspect-square rounded-2xl bg-gradient-to-br from-indigo-100 to-pink-100 flex items-center justify-center">
                 <div className="text-center space-y-2">
                   <div className="text-6xl">🎨</div>
                   <p className="text-muted-foreground">No image available</p>
@@ -204,16 +166,21 @@ const ProductDetail = () => {
                 </span>
               </div>
 
-              {product.data.quantity !== null && (
-                <Badge
-                  variant={isAvailable ? "default" : "secondary"}
-                  className="text-sm"
-                >
-                  {isAvailable
-                    ? `${product.data.quantity} available`
-                    : 'Out of stock'}
-                </Badge>
-              )}
+              <div className="flex items-center gap-4">
+                {product.data.quantity !== null && (
+                  <Badge
+                    variant={isAvailable ? "default" : "secondary"}
+                    className="text-sm"
+                  >
+                    {isAvailable
+                      ? `${product.data.quantity} available`
+                      : 'Out of stock'}
+                  </Badge>
+                )}
+                <div className="flex items-center gap-2 bg-amber-50 hover:bg-amber-100 rounded-full px-4 py-2 transition-colors cursor-pointer">
+                  <ZapButton target={product.event} className="text-amber-600 hover:text-amber-700 text-base" />
+                </div>
+              </div>
             </div>
 
             {product.data.description && (
@@ -245,58 +212,62 @@ const ProductDetail = () => {
 
             {/* Purchase Info */}
             <div className="space-y-4 pt-4">
-              <Alert>
-                <Bitcoin className="h-4 w-4" />
-                <AlertDescription>
-                  This artwork is available for purchase with Bitcoin.
-                  Contact Eden directly to arrange payment and shipping.
-                </AlertDescription>
-              </Alert>
-
               <Button
                 size="lg"
                 className="w-full text-lg"
                 disabled={!isAvailable}
+                onClick={() => setCheckoutOpen(true)}
               >
-                {isAvailable ? 'Contact to Purchase' : 'Currently Unavailable'}
+                <ShoppingBag className="w-5 h-5 mr-2" />
+                {isAvailable ? 'Buy Now' : 'Currently Unavailable'}
               </Button>
 
               <p className="text-sm text-muted-foreground text-center">
-                Questions? Reach out to discuss custom commissions or this piece
+                Pay with Bitcoin Lightning. Questions? Reach out for custom commissions.
               </p>
             </div>
           </div>
         </div>
+
+        {/* Comments Section */}
+        <div className="mt-16">
+          <CommentsSection
+            root={product.event}
+            title="Comments & Discussion"
+            emptyStateMessage="No comments yet"
+            emptyStateSubtitle="Be the first to share your thoughts about this artwork!"
+          />
+        </div>
       </div>
 
       {/* Footer */}
-      <footer className="bg-gradient-to-br from-purple-900 to-purple-950 text-white py-12 mt-24">
+      <footer className="bg-gradient-to-br from-violet-100 to-indigo-100 py-12 mt-24">
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-center space-y-6">
             <div className="flex items-center gap-3">
               <img
                 src="/logo.jpg"
                 alt="Eden Weeks Logo"
-                className="h-12 w-auto brightness-0 invert"
+                className="h-12 w-auto"
               />
-              <span className="font-serif text-2xl font-bold">
+              <span className="font-serif text-2xl font-bold text-violet-900">
                 Eden Weeks
               </span>
             </div>
 
-            <p className="text-purple-200 text-center max-w-md">
+            <p className="text-violet-700 text-center max-w-md">
               Young artist from Cambridgeshire, England. Creating original artwork
               and custom commissions with passion.
             </p>
 
-            <div className="flex items-center gap-2 text-sm text-purple-300">
+            <div className="flex items-center gap-2 text-sm text-violet-600">
               <span>Powered by Nostr & Bitcoin</span>
               <span>•</span>
               <a
                 href="https://shakespeare.diy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-white transition-colors underline"
+                className="hover:text-violet-900 transition-colors underline"
               >
                 Vibed with Shakespeare
               </a>
@@ -304,6 +275,24 @@ const ProductDetail = () => {
           </div>
         </div>
       </footer>
+
+      {/* Checkout Dialog */}
+      {product && stall && (
+        <CheckoutDialog
+          open={checkoutOpen}
+          onOpenChange={setCheckoutOpen}
+          merchantPubkey={EDEN_PUBKEY}
+          product={{
+            id: product.data.id,
+            name: product.data.name,
+            price: product.data.price,
+            currency: product.data.currency,
+            images: product.data.images,
+            shipping: product.data.shipping,
+          }}
+          shippingZones={stall.data.shipping || []}
+        />
+      )}
     </div>
   );
 };

@@ -2,6 +2,11 @@ import { useNostr } from '@nostrify/react';
 import { useQuery } from '@tanstack/react-query';
 import type { NostrEvent } from '@nostrify/nostrify';
 
+export interface ProductShipping {
+  id: string;
+  cost: number;
+}
+
 export interface ProductData {
   id: string;
   stall_id: string;
@@ -12,10 +17,7 @@ export interface ProductData {
   price: number;
   quantity: number | null;
   specs?: Array<[string, string]>;
-  shipping?: Array<{
-    id: string;
-    cost: number;
-  }>;
+  shipping?: ProductShipping[];
 }
 
 export interface Product {
@@ -104,7 +106,7 @@ export function useProduct(merchantPubkey: string, productId: string) {
       
       try {
         const data: ProductData = JSON.parse(event.content);
-        
+
         // Validate required fields
         if (!data.id || !data.stall_id || !data.name || !data.currency || data.price === undefined) {
           console.error('Invalid product data:', data);

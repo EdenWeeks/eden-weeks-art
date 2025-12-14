@@ -351,7 +351,7 @@ const SignupDialog: React.FC<SignupDialogProps> = ({ isOpen, onClose, onComplete
           {/* Generate Step - Enhanced with animations */}
           {step === 'generate' && (
             <div className='text-center space-y-4'>
-              <div className='relative p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-purple-100 dark:from-blue-950/50 dark:to-purple-950/50 overflow-hidden'>
+              <div className='relative p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950/50 dark:to-indigo-950/50 overflow-hidden'>
                 {/* Animated background elements */}
                 {showSparkles && (
                   <div className='absolute inset-0'>
@@ -407,7 +407,7 @@ const SignupDialog: React.FC<SignupDialogProps> = ({ isOpen, onClose, onComplete
 
               {!isLoading && (
                 <Button
-                  className='w-full rounded-full py-6 text-lg font-semibold bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 transform transition-all duration-200 hover:scale-105 shadow-lg'
+                  className='w-full rounded-full py-6 text-lg font-semibold bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 transform transition-all duration-200 hover:scale-105 shadow-lg'
                   onClick={generateKey}
                   disabled={isLoading}
                 >
@@ -521,7 +521,7 @@ const SignupDialog: React.FC<SignupDialogProps> = ({ isOpen, onClose, onComplete
                 <Button
                   className={`w-full rounded-full py-4 text-base font-semibold transform transition-all duration-200 shadow-lg ${
                     keySecured === 'downloaded'
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 dark:from-blue-950/50 dark:to-purple-950/50 hover:scale-105'
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 dark:from-blue-950/50 dark:to-indigo-950/50 hover:scale-105'
                       : 'bg-gradient-to-r from-blue-600/60 to-indigo-600/60 text-muted cursor-not-allowed'
                   }`}
                   onClick={finishKeySetup}

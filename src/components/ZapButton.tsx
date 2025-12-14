@@ -30,8 +30,8 @@ export function ZapButton({
     activeNWC
   );
 
-  // Don't show zap button if user is not logged in, is the author, or author has no lightning address
-  if (!user || !target || user.pubkey === target.pubkey || (!author?.metadata?.lud16 && !author?.metadata?.lud06)) {
+  // Don't show anything if no target
+  if (!target) {
     return null;
   }
 
@@ -39,20 +39,35 @@ export function ZapButton({
   const totalSats = externalZapData?.totalSats ?? fetchedTotalSats;
   const showLoading = externalZapData?.isLoading || isLoading;
 
-  return (
-    <ZapDialog target={target}>
-      <div className={`flex items-center gap-1 ${className}`}>
-        <Zap className="h-4 w-4" />
-        <span className="text-xs">
-          {showLoading ? (
-            '...'
-          ) : showCount && totalSats > 0 ? (
-            `${totalSats.toLocaleString()}`
-          ) : (
-            'Zap'
-          )}
-        </span>
-      </div>
-    </ZapDialog>
+  // Check if zapping is enabled (user logged in, not the author, author has lightning address)
+  const canZap = user &&
+    user.pubkey !== target.pubkey &&
+    (author?.metadata?.lud16 || author?.metadata?.lud06);
+
+  const buttonContent = (
+    <div className={`flex items-center gap-1 ${className}`}>
+      <Zap className="h-4 w-4" />
+      <span className="text-xs">
+        {showLoading ? (
+          '...'
+        ) : showCount && totalSats > 0 ? (
+          `${totalSats.toLocaleString()}`
+        ) : (
+          'Zap'
+        )}
+      </span>
+    </div>
   );
+
+  // If user can zap, wrap in ZapDialog
+  if (canZap) {
+    return (
+      <ZapDialog target={target}>
+        {buttonContent}
+      </ZapDialog>
+    );
+  }
+
+  // Otherwise just show the counts (not clickable)
+  return buttonContent;
 }

@@ -14,9 +14,9 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 10%;
 
-    /* Rich artistic purple as primary - creative and elegant */
-    --primary: 270 60% 35%;
-    --primary-foreground: 0 0% 100%;
+    /* Very light lilac as primary - soft and creative */
+    --primary: 250 45% 75%;
+    --primary-foreground: 250 50% 20%;
 
     /* Soft warm neutral for secondary */
     --secondary: 35 15% 92%;
@@ -36,18 +36,18 @@
     /* Light borders for subtle definition */
     --border: 35 10% 90%;
     --input: 35 10% 90%;
-    --ring: 270 60% 35%;
+    --ring: 250 45% 75%;
 
     --radius: 1rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 10%;
-    --sidebar-primary: 270 60% 35%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary: 250 45% 75%;
+    --sidebar-primary-foreground: 250 50% 20%;
     --sidebar-accent: 35 15% 92%;
     --sidebar-accent-foreground: 0 0% 10%;
     --sidebar-border: 35 10% 90%;
-    --sidebar-ring: 270 60% 35%;
+    --sidebar-ring: 250 45% 75%;
   }
 
   .dark {

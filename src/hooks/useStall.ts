@@ -11,7 +11,7 @@ interface StallData {
     id: string;
     name?: string;
     cost: number;
-    regions: string[];
+    countries?: string[];
   }>;
 }
 
@@ -51,7 +51,7 @@ export function useStall(merchantPubkey: string, stallId: string) {
       
       try {
         const data: StallData = JSON.parse(event.content);
-        
+
         // Validate required fields
         if (!data.id || !data.name || !data.currency) {
           console.error('Invalid stall data:', data);

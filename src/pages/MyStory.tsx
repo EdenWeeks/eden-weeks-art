@@ -1,0 +1,164 @@
+import { useSeoMeta } from '@unhead/react';
+import { Link } from 'react-router-dom';
+import { formatDistanceToNow } from 'date-fns';
+import { usePosts } from '@/hooks/usePosts';
+import { useAuthor } from '@/hooks/useAuthor';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { NoteContent } from '@/components/NoteContent';
+import { NavBar } from '@/components/NavBar';
+import { ZapButton } from '@/components/ZapButton';
+import { ArrowLeft, Heart } from 'lucide-react';
+
+// Eden's npub: npub1enuxqa5g0cggf849yqzd53nu0x28w69sk6xzpx2q4ej75r8tuz2sh9l3eu
+const EDEN_PUBKEY = 'ccf86076887e10849ea52004da467c79947768b0b68c209940ae65ea0cebe095';
+
+const MyStory = () => {
+  useSeoMeta({
+    title: 'My Story - Eden Weeks Art',
+    description: 'Follow Eden Weeks\' artistic journey through her posts and updates on Nostr.',
+  });
+
+  const { data: posts, isLoading } = usePosts(EDEN_PUBKEY, 50, { excludeReplies: true, mediaOnly: true });
+  const { data: author } = useAuthor(EDEN_PUBKEY);
+
+  return (
+    <div className="min-h-screen bg-white">
+      <NavBar />
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Back Button */}
+        <Button variant="ghost" className="mb-6" asChild>
+          <Link to="/">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Home
+          </Link>
+        </Button>
+
+        {/* Profile Header */}
+        <div className="text-center mb-12">
+          <div className="flex justify-center mb-6">
+            <Avatar className="h-32 w-32 ring-4 ring-indigo-100">
+              <AvatarImage src={author?.metadata?.picture || '/eden-weeks.webp'} />
+              <AvatarFallback className="text-4xl bg-gradient-to-br from-indigo-100 to-pink-100">
+                EW
+              </AvatarFallback>
+            </Avatar>
+          </div>
+          <h1 className="font-serif text-4xl sm:text-5xl font-bold text-foreground mb-4">
+            My Story
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            {author?.metadata?.about ||
+              'Follow my artistic journey, thoughts, and updates as I explore creativity and share my passion for art.'}
+          </p>
+        </div>
+
+        {/* Posts Feed */}
+        <div className="max-w-2xl mx-auto space-y-6">
+          {isLoading ? (
+            // Loading skeletons
+            Array.from({ length: 5 }).map((_, i) => (
+              <Card key={i}>
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="flex-1 space-y-3">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-20 w-full" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : posts && posts.length > 0 ? (
+            posts.map((post) => (
+              <Card key={post.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={author?.metadata?.picture || '/eden-weeks.webp'} />
+                      <AvatarFallback>EW</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold text-sm">
+                          {author?.metadata?.name || 'Eden Weeks'}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(post.created_at * 1000), { addSuffix: true })}
+                        </span>
+                      </div>
+                      <div className="prose prose-sm max-w-none">
+                        <NoteContent event={post} />
+                      </div>
+
+                      {/* Zap Button */}
+                      <div className="mt-4 flex items-center">
+                        <div className="flex items-center gap-2 bg-amber-50 hover:bg-amber-100 rounded-full px-3 py-1.5 transition-colors">
+                          <ZapButton
+                            target={post}
+                            className="text-amber-600 hover:text-amber-700 text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <Card className="border-dashed">
+              <CardContent className="py-16 text-center">
+                <Heart className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+                <p className="text-muted-foreground">
+                  No posts yet. Check back soon for updates!
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="bg-gradient-to-br from-violet-100 to-indigo-100 py-12 mt-24">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col items-center justify-center space-y-6">
+            <div className="flex items-center gap-3">
+              <img
+                src="/logo.jpg"
+                alt="Eden Weeks Logo"
+                className="h-12 w-auto"
+              />
+              <span className="font-serif text-2xl font-bold text-violet-900">
+                Eden Weeks
+              </span>
+            </div>
+
+            <p className="text-violet-700 text-center max-w-md">
+              Young artist from Cambridgeshire, England. Creating original artwork
+              and custom commissions with passion.
+            </p>
+
+            <div className="flex items-center gap-2 text-sm text-violet-600">
+              <span>Powered by Nostr & Bitcoin</span>
+              <span>•</span>
+              <a
+                href="https://shakespeare.diy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-violet-900 transition-colors underline"
+              >
+                Vibed with Shakespeare
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default MyStory;
