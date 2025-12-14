@@ -47,12 +47,9 @@ export function NoteContent({
       const [fullMatch, url, nostrPrefix, nostrData, hashtag] = match;
       const index = match.index;
 
-      // Add text before this match
+      // Add text before this match (preserve whitespace)
       if (index > lastIndex) {
-        const textBefore = text.substring(lastIndex, index);
-        if (textBefore.trim()) {
-          parts.push(textBefore);
-        }
+        parts.push(text.substring(lastIndex, index));
       }
 
       if (url) {
@@ -123,12 +120,9 @@ export function NoteContent({
       lastIndex = index + fullMatch.length;
     }
 
-    // Add any remaining text
+    // Add any remaining text (preserve whitespace)
     if (lastIndex < text.length) {
-      const remaining = text.substring(lastIndex);
-      if (remaining.trim()) {
-        parts.push(remaining);
-      }
+      parts.push(text.substring(lastIndex));
     }
 
     // If no special content was found, just use the plain text
