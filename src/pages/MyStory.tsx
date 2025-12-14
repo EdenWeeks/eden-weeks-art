@@ -27,6 +27,16 @@ const MyStory = () => {
     <div className="min-h-screen bg-white">
       <NavBar />
 
+      {/* Profile Banner */}
+      <div className="relative h-48 sm:h-64 md:h-80 overflow-hidden">
+        <img
+          src={author?.metadata?.banner || 'https://m.primal.net/JhNt.jpg'}
+          alt="Profile banner"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent" />
+      </div>
+
       <div className="container mx-auto px-4 py-8">
         {/* Back Button */}
         <Button variant="ghost" className="mb-6" asChild>
@@ -37,9 +47,9 @@ const MyStory = () => {
         </Button>
 
         {/* Profile Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-12 -mt-20 relative z-10">
           <div className="flex justify-center mb-6">
-            <Avatar className="h-32 w-32 ring-4 ring-indigo-100">
+            <Avatar className="h-32 w-32 ring-4 ring-white shadow-lg">
               <AvatarImage src={author?.metadata?.picture || '/eden-weeks.webp'} />
               <AvatarFallback className="text-4xl bg-gradient-to-br from-indigo-100 to-pink-100">
                 EW

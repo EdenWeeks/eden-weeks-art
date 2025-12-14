@@ -112,12 +112,46 @@ const Index = () => {
             <Card className="border-none shadow-lg overflow-hidden">
               <CardContent className="p-8 sm:p-12">
                 <div className="flex flex-col md:flex-row gap-8 md:gap-12">
-                  <div className="flex-shrink-0 mx-auto md:mx-0">
+                  <div className="flex-shrink-0 mx-auto md:mx-0 flex flex-col items-center gap-6">
                     <img
                       src="/eden-weeks.webp"
                       alt="Eden Weeks"
                       className="w-48 h-48 md:w-64 md:h-64 rounded-2xl object-cover shadow-lg"
                     />
+                    <div className="flex items-center gap-4">
+                      <img
+                        src="/bitcoin-lightning.png"
+                        alt="Bitcoin & Lightning Network"
+                        className="h-10 w-auto"
+                        title="Payments accepted via Bitcoin Lightning"
+                      />
+                      <a
+                        href="https://primal.net/p/nprofile1qqsve7rqw6y8uyyyn6jjqpx6ge78n9rhdzctdrpqn9q2ue02pn47p9gqlc40f"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:opacity-80 transition-opacity"
+                      >
+                        <img
+                          src="/nostr-logo.png"
+                          alt="Follow me on Nostr"
+                          className="h-10 w-auto"
+                          title="Follow me on Nostr"
+                        />
+                      </a>
+                      <a
+                        href="https://github.com/edenweeks"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:opacity-80 transition-opacity"
+                        title="View my GitHub"
+                      >
+                        <img
+                          src="/github-logo.png"
+                          alt="View my GitHub"
+                          className="h-10 w-auto"
+                        />
+                      </a>
+                    </div>
                   </div>
                   <div className="space-y-6 text-lg text-muted-foreground leading-relaxed">
                     <p className="text-foreground font-medium text-xl">
@@ -162,6 +196,13 @@ const Index = () => {
                         <span>In-person experience days (coming soon!) where you can paint/draw with me</span>
                       </li>
                     </ul>
+
+                    <Button className="mt-4" asChild>
+                      <Link to="/my-story">
+                        <Heart className="w-4 h-4 mr-2" />
+                        My Story
+                      </Link>
+                    </Button>
                     </div>
                   </div>
                 </div>
