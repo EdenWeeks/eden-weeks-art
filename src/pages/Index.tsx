@@ -273,7 +273,7 @@ const Index = () => {
                         </div>
                       )}
                       <div className="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <ZapButton target={product.event} showCount={false} className="text-amber-500 hover:text-amber-600" />
+                        <ZapButton target={product.event} className="text-amber-500 hover:text-amber-600" />
                       </div>
                     </div>
                   ) : (

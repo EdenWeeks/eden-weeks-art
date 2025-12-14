@@ -30,9 +30,31 @@ interface CheckoutResult {
 }
 
 /**
+ * NIP-15 Order structure (type 0 = new order)
+ */
+interface NIP15Order {
+  id: string;
+  type: 0;
+  name?: string;
+  address?: string;
+  message?: string;
+  contact: {
+    nostr: string;
+    phone?: string;
+    email?: string;
+  };
+  items: Array<{
+    product_id: string;
+    quantity: number;
+  }>;
+  shipping_id: string;
+}
+
+/**
  * Hook for submitting NIP-15 marketplace orders
- * Sends encrypted order to merchant via NIP-04 DM (kind 4)
- * The merchant receives the order in their Nostr client and responds there
+ * Sends two encrypted messages to merchant via NIP-04 DM (kind 4):
+ * 1. NIP-15 structured order JSON (for LNbits Nostr Market extension)
+ * 2. Human-readable notification (for regular Nostr clients like Primal/Damus)
  */
 export function useCheckout() {
   const { nostr } = useNostr();
@@ -45,11 +67,38 @@ export function useCheckout() {
         throw new Error('You must be logged in to place an order');
       }
 
+      if (!user.signer.nip04) {
+        throw new Error('Your login method does not support encrypted messages');
+      }
+
       const orderId = generateOrderId();
       const total = params.price * params.quantity + params.shippingCost;
       const isDigital = params.shippingCost === 0;
 
-      // Build human-readable order message
+      // Build NIP-15 structured order (for LNbits Nostr Market)
+      const nip15Order: NIP15Order = {
+        id: orderId,
+        type: 0,
+        contact: {
+          nostr: user.pubkey,
+          ...(params.email && { email: params.email }),
+          ...(params.phone && { phone: params.phone }),
+        },
+        items: [
+          {
+            product_id: params.productId,
+            quantity: params.quantity,
+          },
+        ],
+        shipping_id: params.shippingId,
+        ...(params.message && { message: params.message }),
+        ...(!isDigital && params.address && {
+          address: formatShippingAddress(params.address),
+          name: params.address.fullName,
+        }),
+      };
+
+      // Build human-readable order notification (for Nostr clients)
       const lines: string[] = [
         `🛒 NEW ORDER #${orderId.slice(0, 8).toUpperCase()}`,
         '',
@@ -86,24 +135,37 @@ export function useCheckout() {
 
       lines.push(`---`, `Order ID: ${orderId}`, `Product ID: ${params.productId}`);
 
-      const plaintext = lines.join('\n');
+      const humanReadableMessage = lines.join('\n');
 
-      // Encrypt content using NIP-04
-      if (!user.signer.nip04) {
-        throw new Error('Your login method does not support encrypted messages');
-      }
-      const encrypted = await user.signer.nip04.encrypt(params.merchantPubkey, plaintext);
+      // Send NIP-15 structured order (for LNbits)
+      const nip15Encrypted = await user.signer.nip04.encrypt(
+        params.merchantPubkey,
+        JSON.stringify(nip15Order)
+      );
 
-      // Create and sign kind 4 DM event
-      const event = await user.signer.signEvent({
+      const nip15Event = await user.signer.signEvent({
         kind: 4,
-        content: encrypted,
+        content: nip15Encrypted,
         tags: [['p', params.merchantPubkey]],
         created_at: Math.floor(Date.now() / 1000),
       });
 
-      // Publish to relays
-      await nostr.event(event, { signal: AbortSignal.timeout(5000) });
+      await nostr.event(nip15Event, { signal: AbortSignal.timeout(5000) });
+
+      // Send human-readable notification (for Nostr clients)
+      const notificationEncrypted = await user.signer.nip04.encrypt(
+        params.merchantPubkey,
+        humanReadableMessage
+      );
+
+      const notificationEvent = await user.signer.signEvent({
+        kind: 4,
+        content: notificationEncrypted,
+        tags: [['p', params.merchantPubkey]],
+        created_at: Math.floor(Date.now() / 1000) + 1, // +1 second to ensure ordering
+      });
+
+      await nostr.event(notificationEvent, { signal: AbortSignal.timeout(5000) });
 
       return {
         orderId,
