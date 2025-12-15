@@ -59,7 +59,7 @@ const MyStory = () => {
 
       <div className="container mx-auto px-4 py-8">
         {/* Back Button */}
-        <Button variant="ghost" className="mb-6" asChild>
+        <Button variant="ghost" className="mb-6 relative z-20" asChild>
           <Link to="/">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home
