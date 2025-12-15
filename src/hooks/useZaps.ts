@@ -54,7 +54,7 @@ export function useZaps(
 
       // Query for zap receipts for this specific event
       if (actualTarget.kind >= 30000 && actualTarget.kind < 40000) {
-        // Addressable event
+        // Addressable event - query by 'a' tag per NIP-57
         const identifier = actualTarget.tags.find((t) => t[0] === 'd')?.[1] || '';
         const events = await nostr.query([{
           kinds: [9735],
@@ -138,16 +138,6 @@ export function useZaps(
     setIsZapping(true);
     setInvoice(null); // Clear any previous invoice at the start
 
-    if (!user) {
-      toast({
-        title: 'Login required',
-        description: 'You must be logged in to send a zap.',
-        variant: 'destructive',
-      });
-      setIsZapping(false);
-      return;
-    }
-
     if (!actualTarget) {
       toast({
         title: 'Event not found',
@@ -192,24 +182,35 @@ export function useZaps(
         return;
       }
 
-      // Create zap request using EventZap format (zapping an event)
       const zapAmount = amount * 1000; // convert to millisats
+      let invoiceUrl = `${zapEndpoint}?amount=${zapAmount}`;
 
-      const zapRequest = nip57.makeZapRequest({
-        event: actualTarget as import('nostr-tools').NostrEvent,
-        amount: zapAmount,
-        relays: config.relayMetadata.relays.map(r => r.url),
-        comment
-      });
+      // If logged in, create a signed NIP-57 zap request for proper attribution
+      if (user?.signer) {
+        try {
+          const zapRequest = nip57.makeZapRequest({
+            profile: author.data.event.pubkey,
+            event: actualTarget as import('nostr-tools').NostrEvent,
+            amount: zapAmount,
+            relays: config.relayMetadata.relays.map(r => r.url),
+            comment
+          } as Parameters<typeof nip57.makeZapRequest>[0]);
 
-      // Sign the zap request (but don't publish to relays - only send to LNURL endpoint)
-      if (!user.signer) {
-        throw new Error('No signer available');
+          const signedZapRequest = await user.signer.signEvent(zapRequest);
+          invoiceUrl += `&nostr=${encodeURI(JSON.stringify(signedZapRequest))}`;
+        } catch (signError) {
+          // If signing fails (e.g., stale session), fall back to regular invoice
+          console.warn('Could not sign zap request, falling back to regular invoice:', signError);
+        }
       }
-      const signedZapRequest = await user.signer.signEvent(zapRequest);
+
+      // Add comment for non-zap payments
+      if (comment && !invoiceUrl.includes('nostr=')) {
+        invoiceUrl += `&comment=${encodeURIComponent(comment)}`;
+      }
 
       try {
-        const res = await fetch(`${zapEndpoint}?amount=${zapAmount}&nostr=${encodeURI(JSON.stringify(signedZapRequest))}`);
+        const res = await fetch(invoiceUrl);
             const responseData = await res.json();
 
             if (!res.ok) {
@@ -316,11 +317,22 @@ export function useZaps(
           }
     } catch (err) {
       console.error('Zap error:', err);
-      toast({
-        title: 'Zap failed',
-        description: (err as Error).message,
-        variant: 'destructive',
-      });
+      const errorMessage = (err as Error).message;
+
+      // Detect stale login state (nos2x/extension lost the key)
+      if (errorMessage.includes('no private key') || errorMessage.includes('not logged in')) {
+        toast({
+          title: 'Session expired',
+          description: 'Please log out and log back in to your Nostr extension.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Zap failed',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+      }
       setIsZapping(false);
     }
   };

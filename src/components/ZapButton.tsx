@@ -39,10 +39,9 @@ export function ZapButton({
   const totalSats = externalZapData?.totalSats ?? fetchedTotalSats;
   const showLoading = externalZapData?.isLoading || isLoading;
 
-  // Check if zapping is enabled (user logged in, not the author, author has lightning address)
-  const canZap = user &&
-    user.pubkey !== target.pubkey &&
-    (author?.metadata?.lud16 || author?.metadata?.lud06);
+  // Check if zapping is enabled (author has lightning address, and user is not zapping themselves)
+  const canZap = (author?.metadata?.lud16 || author?.metadata?.lud06) &&
+    (!user || user.pubkey !== target.pubkey);
 
   const buttonContent = (
     <div className={`flex items-center gap-1 ${className}`}>

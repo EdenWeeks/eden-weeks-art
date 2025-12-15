@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, forwardRef } from 'react';
-import { Zap, Copy, Check, ExternalLink, Sparkle, Sparkles, Star, Rocket, ArrowLeft, X } from 'lucide-react';
+import { Zap, Copy, Check, ExternalLink, Sparkle, Sparkles, Star, Rocket, ArrowLeft, X, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -31,6 +31,7 @@ import { useToast } from '@/hooks/useToast';
 import { useZaps } from '@/hooks/useZaps';
 import { useWallet } from '@/hooks/useWallet';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import LoginDialog from '@/components/auth/LoginDialog';
 import type { Event } from 'nostr-tools';
 import QRCode from 'qrcode';
 import type { WebLNProvider } from "@webbtc/webln-types";
@@ -57,6 +58,8 @@ interface ZapContentProps {
   qrCodeUrl: string;
   copied: boolean;
   webln: WebLNProvider | null;
+  isLoggedIn: boolean;
+  onLoginClick: () => void;
   handleZap: () => void;
   handleCopy: () => void;
   openInWallet: () => void;
@@ -75,6 +78,8 @@ const ZapContent = forwardRef<HTMLDivElement, ZapContentProps>(({
   qrCodeUrl,
   copied,
   webln,
+  isLoggedIn,
+  onLoginClick,
   handleZap,
   handleCopy,
   openInWallet,
@@ -172,6 +177,23 @@ const ZapContent = forwardRef<HTMLDivElement, ZapContentProps>(({
       </div>
     ) : (
       <>
+        {/* Login notice for non-logged-in users */}
+        {!isLoggedIn && (
+          <div className="mx-4 mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-sm text-amber-800 mb-2">
+              Log in with Nostr to have your tip appear publicly as a zap.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onLoginClick}
+              className="w-full border-amber-300 text-amber-700 hover:bg-amber-100"
+            >
+              <LogIn className="h-4 w-4 mr-2" />
+              Log in to Nostr
+            </Button>
+          </div>
+        )}
         <div className="grid gap-3 px-4 py-4 w-full overflow-hidden">
           <ToggleGroup
             type="single"
@@ -246,12 +268,13 @@ export function ZapDialog({ target, children, className }: ZapDialogProps) {
   const [comment, setComment] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
 
   useEffect(() => {
     if (target) {
-      setComment('Zapped with MKStack!');
+      setComment('Zapped from EdenWeeks.Art!');
     }
   }, [target]);
 
@@ -339,6 +362,8 @@ export function ZapDialog({ target, children, className }: ZapDialogProps) {
     qrCodeUrl,
     copied,
     webln,
+    isLoggedIn: !!user,
+    onLoginClick: () => setShowLoginDialog(true),
     handleZap,
     handleCopy,
     openInWallet,
@@ -348,13 +373,15 @@ export function ZapDialog({ target, children, className }: ZapDialogProps) {
     zap,
   };
 
-  if (!user || user.pubkey === target.pubkey || !author?.metadata?.lud06 && !author?.metadata?.lud16) {
+  // Hide zap button if: user is zapping themselves, or author has no lightning address
+  if ((user && user.pubkey === target.pubkey) || (!author?.metadata?.lud06 && !author?.metadata?.lud16)) {
     return null;
   }
 
   if (isMobile) {
     // Use drawer for entire mobile flow, make it full-screen when showing invoice
     return (
+      <>
       <Drawer
         open={open}
         onOpenChange={(newOpen) => {
@@ -429,10 +456,17 @@ export function ZapDialog({ target, children, className }: ZapDialogProps) {
           </div>
         </DrawerContent>
       </Drawer>
+      <LoginDialog
+        isOpen={showLoginDialog}
+        onClose={() => setShowLoginDialog(false)}
+        onLogin={() => setShowLoginDialog(false)}
+      />
+      </>
     );
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <div className={`cursor-pointer ${className || ''}`}>
@@ -459,5 +493,11 @@ export function ZapDialog({ target, children, className }: ZapDialogProps) {
         </div>
       </DialogContent>
     </Dialog>
+    <LoginDialog
+      isOpen={showLoginDialog}
+      onClose={() => setShowLoginDialog(false)}
+      onLogin={() => setShowLoginDialog(false)}
+    />
+    </>
   );
 }
