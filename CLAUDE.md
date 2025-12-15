@@ -97,3 +97,21 @@ See `docs/` for implementation patterns:
 - Run `npm run test` after all code changes
 - Do not write new tests unless explicitly requested
 - Always check gh runs after pushing
+- The Nostr client in LNbits has:
+
+wss://nostr.oxtr.dev
+wss://nos.lol
+wss://relay.primal.net
+wss://nostr.land
+wss://eden.nostr.land
+wss://nostr.bitcoiner.social
+wss://relay.nostr.band
+wss://relay.damus.io
+wss://relay.snort.social
+wss://nostr.wine
+- Plebeian Market uses the following relays:
+
+wss://relay.nostr.band
+wss://nos.lol
+wss://relay.nostr.net
+wss://relay.damus.io
