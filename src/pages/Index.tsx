@@ -69,7 +69,7 @@ const Index = () => {
 
               <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6">
                 Bringing Your
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-amber-400 to-yellow-400">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-violet-400 to-indigo-500">
                   {' '}Vision to Life
                 </span>
               </h1>
