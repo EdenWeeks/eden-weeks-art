@@ -115,3 +115,5 @@ wss://relay.nostr.band
 wss://nos.lol
 wss://relay.nostr.net
 wss://relay.damus.io
+- The GitHub repo for the Nostr Market is lnbit/nostrmarket
+- The GitHub repo fpr the Nostr MArket is lnbits/nostrmarket
