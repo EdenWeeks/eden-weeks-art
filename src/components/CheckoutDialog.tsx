@@ -9,19 +9,14 @@ import { Separator } from '@/components/ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCheckout } from '@/hooks/useCheckout';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { useAuthor } from '@/hooks/useAuthor';
 import { useWallet } from '@/hooks/useWallet';
 import { useNWC } from '@/hooks/useNWCContext';
 import { useNostr } from '@nostrify/react';
 import LoginDialog from '@/components/auth/LoginDialog';
-import { isDigitalShipping, type ShippingAddress } from '@/types/order';
+import { type ShippingAddress } from '@/types/order';
 import { useToast } from '@/hooks/useToast';
-import {
-  fetchLnurlPayParams,
-  requestInvoice,
-  payWithWebLN,
-  fiatToSats,
-} from '@/lib/lightning';
+import { usePaymentRequest } from '@/hooks/usePaymentRequest';
+import { payWithWebLN, decodeBolt11Amount } from '@/lib/lightning';
 import { ShoppingBag, Loader2, Zap, Copy, Check, ExternalLink, Wallet } from 'lucide-react';
 import QRCode from 'qrcode';
 
@@ -63,11 +58,11 @@ export function CheckoutDialog({
 }: CheckoutDialogProps) {
   const { user } = useCurrentUser();
   const { mutateAsync: submitOrder, isPending: isSubmitting } = useCheckout();
-  const { data: merchant } = useAuthor(merchantPubkey);
   const { toast } = useToast();
   const { webln, activeNWC, hasNWC } = useWallet();
   const { sendPayment } = useNWC();
   const { nostr } = useNostr();
+  const { waitForPaymentRequest, waitForPaymentConfirmation } = usePaymentRequest();
 
   const [step, setStep] = useState<CheckoutStep>('details');
   const [showLoginDialog, setShowLoginDialog] = useState(false);
@@ -95,9 +90,7 @@ export function CheckoutDialog({
   const [isPaying, setIsPaying] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
-
-  // Get merchant's Lightning address
-  const lightningAddress = merchant?.metadata?.lud16;
+  const [orderMessage, setOrderMessage] = useState<string | null>(null);
 
   // Generate QR code when invoice changes
   useEffect(() => {
@@ -134,6 +127,45 @@ export function CheckoutDialog({
     };
   }, [invoice]);
 
+  // Poll for payment confirmation when invoice is displayed
+  useEffect(() => {
+    if (!invoice || !orderId || step !== 'payment') {
+      return;
+    }
+
+    let isCancelled = false;
+
+    const pollPaymentStatus = async () => {
+      try {
+        const status = await waitForPaymentConfirmation(
+          merchantPubkey,
+          orderId,
+          120000 // 2 minute timeout
+        );
+
+        if (!isCancelled && status.paid) {
+          console.log('[Checkout] Payment confirmed via NIP-15!');
+          // Directly set success state (handlePaymentSuccess will be called separately or we handle inline)
+          setStep('success');
+          toast({
+            title: 'Payment successful!',
+            description: 'Your order has been paid. Eden will process it shortly.',
+          });
+        }
+      } catch (err) {
+        // Timeout or error - user can still click "I've already paid"
+        console.log('[Checkout] Payment confirmation polling ended:', err);
+      }
+    };
+
+    pollPaymentStatus();
+
+    return () => {
+      isCancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoice, orderId, step, merchantPubkey]);
+
   // Merge stall shipping zones with product-level cost overrides
   const mergedShippingZones = useMemo(() => {
     return shippingZones.map(zone => {
@@ -150,31 +182,17 @@ export function CheckoutDialog({
     return mergedShippingZones.find(z => z.id === selectedShippingId);
   }, [mergedShippingZones, selectedShippingId]);
 
-  // Check if digital
-  const isDigital = useMemo(() => {
-    if (!selectedZone) return false;
-    if (selectedZone.cost === 0) return true;
-    return isDigitalShipping(selectedZone);
-  }, [selectedZone]);
-
   // Calculate totals
   const shippingCost = selectedZone?.cost ?? 0;
   const subtotal = product.price * quantity;
   const total = subtotal + shippingCost;
 
-  // Form validation
+  // Form validation - just require shipping zone and email
   const isFormValid = useMemo(() => {
     if (!selectedShippingId) return false;
     if (!email) return false;
-
-    if (!isDigital) {
-      if (!fullName || !addressLine1 || !city || !postcode || !country) {
-        return false;
-      }
-    }
-
     return true;
-  }, [selectedShippingId, email, isDigital, fullName, addressLine1, city, postcode, country]);
+  }, [selectedShippingId, email]);
 
   const resetForm = useCallback(() => {
     setStep('details');
@@ -193,6 +211,7 @@ export function CheckoutDialog({
     setCopied(false);
     setOrderId(null);
     setQrCodeUrl('');
+    setOrderMessage(null);
   }, []);
 
   const handleClose = useCallback((open: boolean) => {
@@ -210,26 +229,18 @@ export function CheckoutDialog({
       return;
     }
 
-    if (!lightningAddress) {
-      toast({
-        title: 'Payment not available',
-        description: 'The merchant has not set up a Lightning address.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const address: ShippingAddress | undefined = isDigital ? undefined : {
+    // Include address only if fields are filled in
+    const address: ShippingAddress | undefined = fullName && addressLine1 ? {
       fullName,
       addressLine1,
       addressLine2: addressLine2 || undefined,
       city,
       postcode,
       country,
-    };
+    } : undefined;
 
     try {
-      // Submit order first
+      // Submit NIP-15 order (type 0)
       const result = await submitOrder({
         merchantPubkey,
         productId: product.id,
@@ -248,38 +259,33 @@ export function CheckoutDialog({
 
       setOrderId(result.orderId);
 
-      // Now set up payment
+      // Move to payment step and wait for merchant's invoice
       setIsLoadingPayment(true);
       setStep('payment');
 
       try {
-        // Convert fiat to sats
-        console.log('Converting', total, product.currency, 'to sats...');
-        const sats = await fiatToSats(total, product.currency);
-        console.log('Amount in sats:', sats);
-        setAmountSats(sats);
-
-        // Fetch LNURL-pay params and get invoice
-        console.log('Fetching LNURL params from:', lightningAddress);
-        const lnurlParams = await fetchLnurlPayParams(lightningAddress);
-        console.log('LNURL params:', lnurlParams);
-
-        console.log('Requesting invoice for', sats, 'sats...');
-        const invoiceResponse = await requestInvoice(
-          lnurlParams,
-          sats,
-          `Order #${result.orderId.slice(0, 8)} - ${product.name}`
+        // Wait for NIP-15 payment request (type 1) from merchant
+        const paymentRequest = await waitForPaymentRequest(
+          merchantPubkey,
+          result.orderId,
+          30000 // 30 second timeout
         );
-        console.log('Got invoice:', invoiceResponse.pr.substring(0, 50) + '...');
 
-        setInvoice(invoiceResponse.pr);
+        // Decode the invoice to get amount
+        const sats = decodeBolt11Amount(paymentRequest.invoice);
+        if (sats) {
+          setAmountSats(sats);
+        }
+
+        setInvoice(paymentRequest.invoice);
+        setOrderMessage(paymentRequest.message || null);
         setIsLoadingPayment(false);
       } catch (paymentError) {
         console.error('Payment setup error:', paymentError);
         setIsLoadingPayment(false);
         toast({
-          title: 'Payment setup failed',
-          description: paymentError instanceof Error ? paymentError.message : 'Could not generate invoice',
+          title: 'Waiting for invoice',
+          description: 'The merchant is preparing your invoice. Please check back shortly or contact Eden directly.',
           variant: 'destructive',
         });
       }
@@ -290,8 +296,8 @@ export function CheckoutDialog({
       // If we already sent the order, stay on payment step
       if (orderId) {
         toast({
-          title: 'Payment setup failed',
-          description: error instanceof Error ? error.message : 'Could not generate invoice. Please contact Eden directly.',
+          title: 'Order sent',
+          description: 'Your order was sent but we could not get the invoice. Please contact Eden directly.',
           variant: 'destructive',
         });
       } else {
@@ -433,38 +439,36 @@ export function CheckoutDialog({
                     <SelectContent>
                       {mergedShippingZones.map((zone) => (
                         <SelectItem key={zone.id} value={zone.id}>
-                          {zone.name || (zone.countries?.join(', ') || 'Shipping')} - {zone.cost === 0 ? 'Free' : `${zone.cost} ${product.currency}`}
+                          {zone.name || (zone.countries?.join(', ') || 'Shipping')} - {zone.cost} {product.currency}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                {/* Address Fields (only for physical products) */}
-                {selectedShippingId && !isDigital && (
+                {/* Address Fields */}
+                {selectedShippingId && (
                   <div className="space-y-4">
                     <Separator />
-                    <h4 className="font-medium">Shipping Address</h4>
+                    <h4 className="font-medium">Shipping Address (optional)</h4>
 
                     <div className="space-y-2">
-                      <Label htmlFor="fullName">Full Name *</Label>
+                      <Label htmlFor="fullName">Full Name</Label>
                       <Input
                         id="fullName"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         placeholder="John Doe"
-                        required
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="addressLine1">Address Line 1 *</Label>
+                      <Label htmlFor="addressLine1">Address Line 1</Label>
                       <Input
                         id="addressLine1"
                         value={addressLine1}
                         onChange={(e) => setAddressLine1(e.target.value)}
                         placeholder="123 Main Street"
-                        required
                       />
                     </div>
 
@@ -474,41 +478,38 @@ export function CheckoutDialog({
                         id="addressLine2"
                         value={addressLine2}
                         onChange={(e) => setAddressLine2(e.target.value)}
-                        placeholder="Apartment, suite, etc. (optional)"
+                        placeholder="Apartment, suite, etc."
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="city">City *</Label>
+                        <Label htmlFor="city">City</Label>
                         <Input
                           id="city"
                           value={city}
                           onChange={(e) => setCity(e.target.value)}
                           placeholder="Cambridge"
-                          required
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="postcode">Postcode *</Label>
+                        <Label htmlFor="postcode">Postcode</Label>
                         <Input
                           id="postcode"
                           value={postcode}
                           onChange={(e) => setPostcode(e.target.value)}
                           placeholder="CB1 2AB"
-                          required
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="country">Country *</Label>
+                      <Label htmlFor="country">Country</Label>
                       <Input
                         id="country"
                         value={country}
                         onChange={(e) => setCountry(e.target.value)}
                         placeholder="United Kingdom"
-                        required
                       />
                     </div>
                   </div>
@@ -530,11 +531,6 @@ export function CheckoutDialog({
                         placeholder="you@example.com"
                         required
                       />
-                      {isDigital && (
-                        <p className="text-xs text-muted-foreground">
-                          Digital products will be delivered to this email
-                        </p>
-                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -572,7 +568,7 @@ export function CheckoutDialog({
                       </div>
                       <div className="flex justify-between text-sm">
                         <span>Shipping</span>
-                        <span>{shippingCost === 0 ? 'Free' : `${shippingCost.toLocaleString()} ${product.currency}`}</span>
+                        <span>{shippingCost} {product.currency}</span>
                       </div>
                       <Separator />
                       <div className="flex justify-between font-bold">
@@ -588,7 +584,7 @@ export function CheckoutDialog({
                   type="submit"
                   className="w-full"
                   size="lg"
-                  disabled={!isFormValid || isSubmitting || !lightningAddress}
+                  disabled={!isFormValid || isSubmitting}
                 >
                   {isSubmitting ? (
                     <>
@@ -597,8 +593,6 @@ export function CheckoutDialog({
                     </>
                   ) : !user ? (
                     'Log in to Order'
-                  ) : !lightningAddress ? (
-                    'Payment not available'
                   ) : (
                     <>
                       <Zap className="w-4 h-4 mr-2" />
@@ -630,7 +624,8 @@ export function CheckoutDialog({
                 {isLoadingPayment ? (
                   <div className="py-12 text-center">
                     <Loader2 className="w-8 h-8 mx-auto mb-4 animate-spin text-amber-500" />
-                    <p className="text-muted-foreground">Preparing payment...</p>
+                    <p className="text-muted-foreground">Waiting for invoice from merchant...</p>
+                    <p className="text-xs text-muted-foreground mt-2">This usually takes a few seconds</p>
                   </div>
                 ) : invoice ? (
                   <>
@@ -640,9 +635,12 @@ export function CheckoutDialog({
                       <p className="text-3xl font-bold text-amber-900">
                         {amountSats?.toLocaleString()} sats
                       </p>
-                      <p className="text-sm text-amber-600 mt-1">
-                        ({total.toLocaleString()} {product.currency})
-                      </p>
+                      {/* Order breakdown from merchant */}
+                      {orderMessage && (
+                        <p className="text-xs text-amber-700 mt-2 font-mono">
+                          {orderMessage}
+                        </p>
+                      )}
                     </div>
 
                     {/* QR Code */}

@@ -3,6 +3,8 @@
  * Works with any Lightning address (lud16) from Nostr profiles
  */
 
+import { nip57 } from 'nostr-tools';
+
 export interface LnurlPayParams {
   callback: string;
   minSendable: number; // millisats
@@ -124,9 +126,17 @@ export async function payWithWebLN(bolt11: string): Promise<{ success: boolean; 
 }
 
 /**
- * Convert amount from fiat (GBP, USD, EUR) to satoshis
- * Uses a simple exchange rate fetch
+ * Decode a bolt11 invoice to get the amount in satoshis
  */
+export function decodeBolt11Amount(bolt11: string): number | null {
+  try {
+    return nip57.getSatoshisAmountFromBolt11(bolt11);
+  } catch (error) {
+    console.error('Failed to decode bolt11 amount:', error);
+    return null;
+  }
+}
+
 export async function fiatToSats(amount: number, currency: string): Promise<number> {
   try {
     // Use CoinGecko API for exchange rate
