@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MessageCircle, LogIn } from 'lucide-react';
+import { Mail, MessageCircle, LogIn } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -14,6 +14,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useMessagesDrawer } from '@/hooks/useMessagesDrawer';
 
 const EDEN_PUBKEY = import.meta.env.VITE_EDEN_PUBKEY;
+const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL;
 
 /**
  * Right-side drawer that lets a customer message Eden and read their full
@@ -75,6 +76,19 @@ export function MessagesDrawer() {
               pubkey={EDEN_PUBKEY}
               className="h-full border-0 shadow-none"
             />
+          </div>
+        )}
+
+        {CONTACT_EMAIL && (
+          <div className="border-t p-3 text-center text-sm text-muted-foreground">
+            Or contact via email:{' '}
+            <a
+              href={`mailto:${CONTACT_EMAIL}`}
+              className="inline-flex items-center gap-1 text-primary hover:underline"
+            >
+              <Mail className="h-3.5 w-3.5" />
+              {CONTACT_EMAIL}
+            </a>
           </div>
         )}
       </SheetContent>
