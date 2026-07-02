@@ -18,6 +18,8 @@ interface GammaCheckoutParams {
   item: GammaOrderItem;
   shipping: Omit<GammaOrderShipping, 'shippingRef'>;
   shippingOption?: ShippingOptionData;
+  /** All-in order total in sats (product + shipping), for auto-invoicing. */
+  totalSats?: number;
 }
 
 /**
@@ -31,7 +33,7 @@ export function useGammaCheckout() {
   const { user } = useCurrentUser();
 
   return useMutation({
-    mutationFn: async ({ item, shipping, shippingOption }: GammaCheckoutParams) => {
+    mutationFn: async ({ item, shipping, shippingOption, totalSats }: GammaCheckoutParams) => {
       if (!user) throw new Error('You must be logged in to place an order');
 
       const orderId = generateOrderId();
@@ -40,7 +42,7 @@ export function useGammaCheckout() {
         shippingRef: shippingOption ? shippingOptionRef(shippingOption) : undefined,
       };
 
-      const orderRumor = createOrderRumor(orderId, [item], fullShipping, MERCHANT_PUBKEY);
+      const orderRumor = createOrderRumor(orderId, [item], fullShipping, MERCHANT_PUBKEY, totalSats);
       const summaryRumor = createOrderSummaryRumor(
         orderId,
         [item],

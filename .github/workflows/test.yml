@@ -26,3 +26,26 @@ jobs:
 
       - name: Run tests
         run: npm run test
+
+  order-service-tests:
+    name: Order Service Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: order-service/package-lock.json
+
+      - name: Install order-service dependencies
+        run: npm ci
+        working-directory: order-service
+
+      - name: Run order-service tests
+        run: npm test
+        working-directory: order-service
