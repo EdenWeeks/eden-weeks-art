@@ -1,12 +1,16 @@
 import { NKinds, NostrEvent, NostrFilter } from '@nostrify/nostrify';
 import { useNostr } from '@nostrify/react';
 import { useQuery } from '@tanstack/react-query';
+import { commentRootRef } from '@/lib/productComments';
 
 export function useComments(root: NostrEvent | URL, limit?: number) {
   const { nostr } = useNostr();
 
   return useQuery({
-    queryKey: ['nostr', 'comments', root instanceof URL ? root.toString() : root.id, limit],
+    // Keyed by the stable root ref (coordinate for addressable events) so a
+    // republished listing — whose event id changes — reuses the same cache
+    // entry instead of refetching the whole thread.
+    queryKey: ['nostr', 'comments', commentRootRef(root), limit],
     queryFn: async (c) => {
       const filter: NostrFilter = { kinds: [1111] };
 
