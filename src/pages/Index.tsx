@@ -1,7 +1,8 @@
 import { useSeoMeta } from '@unhead/react';
 import { Link } from 'react-router-dom';
 import { Masonry } from 'react-plock';
-import { useProducts } from '@/hooks/useProducts';
+import { useUnifiedProducts } from '@/hooks/useUnifiedProducts';
+import { OwnerToolbar } from '@/components/admin/OwnerToolbar';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,26 +11,24 @@ import { Palette, Heart, ShoppingBag } from 'lucide-react';
 import { NavBar } from '@/components/NavBar';
 import { ZapButton } from '@/components/ZapButton';
 
-const EDEN_PUBKEY = import.meta.env.VITE_EDEN_PUBKEY;
-const STALL_ID = import.meta.env.VITE_STALL_ID;
-
 const Index = () => {
   useSeoMeta({
     title: 'Eden Weeks - Young Artist & Creative | Original Artwork',
     description: 'Discover original artwork by Eden Weeks, a young artist from Cambridgeshire, England. Specializing in animal portraits, custom commissions, and creative experimentation.',
   });
 
-  const { data: products, isLoading } = useProducts(EDEN_PUBKEY, STALL_ID);
+  const { data: products, isLoading } = useUnifiedProducts();
 
   return (
     <div className="min-h-screen bg-white">
       <NavBar />
+      <OwnerToolbar />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden min-h-[80vh] flex items-center">
         {/* Masonry Background */}
         {products && products.length > 0 && (() => {
-          const allImages = products.flatMap(p => p.data.images || []);
+          const allImages = products.flatMap(p => p.images);
           // Repeat images to fill grid
           const repeatedImages = Array.from({ length: 32 }, (_, i) => allImages[i % allImages.length]);
           return (
@@ -255,17 +254,17 @@ const Index = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {products.map((product) => (
                 <Card
-                  key={product.data.id}
+                  key={`${product.protocol}-${product.id}`}
                   className="group overflow-hidden hover:shadow-2xl transition-all duration-300 border-border/50"
                 >
-                  {product.data.images && product.data.images.length > 0 ? (
+                  {product.images.length > 0 ? (
                     <div className="relative aspect-square overflow-hidden">
                       <img
-                        src={product.data.images[0]}
-                        alt={product.data.name}
+                        src={product.images[0]}
+                        alt={product.name}
                         className="absolute inset-0 w-full h-full object-cover scale-125 transition-transform duration-500 group-hover:scale-150"
                       />
-                      {product.data.quantity !== null && product.data.quantity <= 0 && (
+                      {product.stock != null && product.stock <= 0 && (
                         <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                           <Badge variant="secondary" className="text-lg px-4 py-2">
                             Sold Out
@@ -284,29 +283,27 @@ const Index = () => {
 
                   <CardContent className="p-6 space-y-2">
                     <h3 className="font-serif text-xl font-bold text-foreground group-hover:text-primary transition-colors">
-                      {product.data.name}
+                      {product.name}
                     </h3>
 
-                    {product.data.description && (
+                    {product.description && (
                       <p className="text-sm text-muted-foreground line-clamp-2">
-                        {product.data.description}
+                        {product.description}
                       </p>
                     )}
 
                     <div className="flex items-baseline gap-2 pt-2">
                       <span className="text-2xl font-bold text-foreground">
-                        {product.data.price.toLocaleString()}
+                        {product.price.toLocaleString()}
                       </span>
                       <span className="text-sm text-muted-foreground">
-                        {product.data.currency}
+                        {product.currency}
                       </span>
                     </div>
 
-                    {product.data.quantity !== null && (
+                    {product.stock != null && (
                       <p className="text-xs text-muted-foreground">
-                        {product.data.quantity > 0
-                          ? `${product.data.quantity} available`
-                          : 'Out of stock'}
+                        {product.stock > 0 ? `${product.stock} available` : 'Out of stock'}
                       </p>
                     )}
                   </CardContent>
@@ -314,10 +311,10 @@ const Index = () => {
                   <CardFooter className="p-6 pt-0">
                     <Button
                       className="w-full group-hover:shadow-lg transition-shadow"
-                      disabled={product.data.quantity !== null && product.data.quantity <= 0}
+                      disabled={product.stock != null && product.stock <= 0}
                       asChild
                     >
-                      <Link to={`/product/${product.data.id}`}>
+                      <Link to={`/product/${product.id}`}>
                         View Details
                       </Link>
                     </Button>

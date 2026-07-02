@@ -1,0 +1,72 @@
+name: PR Lint
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  pr-lint:
+    name: Title and body
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title and body
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -u
+
+          # Bots open PRs without test plans — skip with success (exit 0 inside
+          # the step, not a job-level `if:`, so the check still reports
+          # "success" rather than "skipped" and can be required).
+          if [ "$GITHUB_ACTOR" = 'dependabot[bot]' ] || [ "$GITHUB_ACTOR" = 'github-actions[bot]' ]; then
+            echo "Skipping PR lint for bot actor: $GITHUB_ACTOR"
+            exit 0
+          fi
+
+          fail=0
+
+          # 1. Title must use conventional-commit style, optional (scope):
+          #      feat: ... | feat(shop): ... | fix: ... | chore: ... etc.
+          title_regex='^(feat|fix|perf|refactor|chore|ci|docs|deps|test|build|style)(\([a-z0-9-]+\))?: .+'
+          if ! echo "$PR_TITLE" | grep -Eq "$title_regex"; then
+            echo "::error::PR title must start with a conventional-commit prefix (optional scope):"
+            echo "::error::  feat: ...  feat(shop): ...  fix: ...  perf: ...  refactor: ..."
+            echo "::error::  chore: ... ci: ...  docs: ...  deps: ...  test: ...  build: ...  style: ..."
+            echo "::error::Got: '$PR_TITLE'"
+            fail=1
+          fi
+
+          # 2. Body must not be empty and must be a meaningful length
+          body_len=$(echo -n "${PR_BODY:-}" | wc -c)
+          if [ "$body_len" -lt 40 ]; then
+            echo "::error::PR body is missing or too short (<40 chars). Describe what changed and why."
+            fail=1
+          fi
+
+          # 3. Body must include a Test plan section with real content
+          if ! echo "$PR_BODY" | grep -Eq '^## Test plan'; then
+            echo "::error::PR body must include a '## Test plan' section."
+            echo "::error::Provide step-by-step tester actions, or 'N/A — <reason>' for pure refactor/docs/ci/deps."
+            fail=1
+          else
+            tp_content=$(echo "$PR_BODY" | awk '
+              /^## Test plan/ {intp=1; next}
+              /^## / {intp=0}
+              intp {print}
+            ' | perl -0pe 's/<!--.*?-->//gs' | tr -d '[:space:]')
+            if [ -z "$tp_content" ]; then
+              echo "::error::'## Test plan' section is empty or only contains the template comment."
+              echo "::error::Add steps or 'N/A — <reason>'."
+              fail=1
+            fi
+          fi
+
+          if [ "$fail" -ne 0 ]; then
+            exit 1
+          fi
+          echo "PR lint passed."
