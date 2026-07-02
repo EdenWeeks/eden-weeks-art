@@ -1,35 +1,22 @@
-FROM node:20-alpine AS builder
+# Build stage
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
-
-# Install dependencies
 RUN npm ci
 
-# Copy source files
 COPY . .
+# Vite bakes VITE_* values from .env.production (public identifiers only)
+RUN npx vite build -l error && cp dist/index.html dist/404.html
 
-# Build the app
-RUN npm run build
+# Production stage — static hosting, matching robotechy's serve setup
+FROM node:22-alpine
 
-# Production stage - serve with nginx
-FROM nginx:alpine
+WORKDIR /app
+RUN npm install -g serve@14.2.6
 
-# Copy built files to nginx
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Copy nginx config for SPA routing
-RUN echo 'server { \
-    listen 80; \
-    root /usr/share/nginx/html; \
-    index index.html; \
-    location / { \
-        try_files $uri $uri/ /index.html; \
-    } \
-}' > /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/dist ./dist
 
 EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["serve", "-s", "dist", "-l", "80"]
