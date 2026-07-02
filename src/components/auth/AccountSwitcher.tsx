@@ -72,28 +72,28 @@ export function AccountSwitcher({ onAddAccountClick }: AccountSwitcherProps) {
           <>
             <DropdownMenuLabel className='text-sm'>Store manager</DropdownMenuLabel>
             <DropdownMenuItem
-              onClick={() => setStoreDialog('product')}
+              onSelect={() => setStoreDialog('product')}
               className='flex items-center gap-2 cursor-pointer p-2 rounded-md'
             >
               <PackagePlus className='w-4 h-4' />
               <span>Add product</span>
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => setStoreDialog('shipping')}
+              onSelect={() => setStoreDialog('shipping')}
               className='flex items-center gap-2 cursor-pointer p-2 rounded-md'
             >
               <Truck className='w-4 h-4' />
               <span>Shipping options</span>
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => setStoreDialog('collections')}
+              onSelect={() => setStoreDialog('collections')}
               className='flex items-center gap-2 cursor-pointer p-2 rounded-md'
             >
               <FolderTree className='w-4 h-4' />
               <span>Categories &amp; collections</span>
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => setStoreDialog('migrate')}
+              onSelect={() => setStoreDialog('migrate')}
               className='flex items-center gap-2 cursor-pointer p-2 rounded-md'
             >
               <ArrowRightLeft className='w-4 h-4' />
