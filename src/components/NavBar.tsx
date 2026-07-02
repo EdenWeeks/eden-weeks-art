@@ -5,7 +5,8 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from 
 import { LoginArea } from '@/components/auth/LoginArea';
 import { ContactDialog } from '@/components/ContactDialog';
 import LoginDialog from '@/components/auth/LoginDialog';
-import { Menu, ShoppingBag, Home, Image, BookOpen, User, Mail } from 'lucide-react';
+import { Menu, ShoppingBag, Home, Image, BookOpen, User, Mail, MessageCircle } from 'lucide-react';
+import { useMessagesDrawer } from '@/hooks/useMessagesDrawer';
 import { cn } from '@/lib/utils';
 
 interface NavLinkProps {
@@ -52,6 +53,7 @@ export function NavBar() {
   const [contactOpen, setContactOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { openMessages } = useMessagesDrawer();
 
   const handleMobileNavClick = () => {
     setMobileMenuOpen(false);
@@ -60,6 +62,11 @@ export function NavBar() {
   const handleMobileContactClick = () => {
     setMobileMenuOpen(false);
     setContactOpen(true);
+  };
+
+  const handleMobileMessagesClick = () => {
+    setMobileMenuOpen(false);
+    openMessages();
   };
 
   return (
@@ -100,6 +107,14 @@ export function NavBar() {
                   <ShoppingBag className="w-4 h-4 mr-2" />
                   Shop
                 </a>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={openMessages}
+                aria-label="Messages"
+              >
+                <MessageCircle className="h-5 w-5" />
               </Button>
               <LoginArea />
             </div>
@@ -167,6 +182,13 @@ export function NavBar() {
                     >
                       <Mail className="w-5 h-5" />
                       Contact
+                    </button>
+                    <button
+                      onClick={handleMobileMessagesClick}
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-muted text-left"
+                    >
+                      <MessageCircle className="w-5 h-5" />
+                      Messages
                     </button>
                     <a
                       href={isHome ? "#shop" : "/#shop"}

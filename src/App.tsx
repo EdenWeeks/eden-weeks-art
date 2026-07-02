@@ -11,8 +11,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { NostrLoginProvider } from '@nostrify/react/login';
 import { AppProvider } from '@/components/AppProvider';
+import { DMProvider } from '@/components/DMProvider';
 import { NWCProvider } from '@/contexts/NWCContext';
 import { AppConfig } from '@/contexts/AppContext';
+import { MessagesDrawerProvider } from '@/contexts/MessagesDrawerContext';
+import { PROTOCOL_MODE } from '@/lib/dmConstants';
 import AppRouter from './AppRouter';
 
 const head = createHead({
@@ -56,9 +59,14 @@ export function App() {
               <NWCProvider>
                 <TooltipProvider>
                   <Toaster />
-                  <Suspense>
-                    <AppRouter />
-                  </Suspense>
+                  {/* NIP04_ONLY: orders and replies flow over kind 4 DMs (LNbits Nostr Market) */}
+                  <DMProvider config={{ enabled: true, protocolMode: PROTOCOL_MODE.NIP04_ONLY }}>
+                    <MessagesDrawerProvider>
+                      <Suspense>
+                        <AppRouter />
+                      </Suspense>
+                    </MessagesDrawerProvider>
+                  </DMProvider>
                 </TooltipProvider>
               </NWCProvider>
             </NostrProvider>
