@@ -1,15 +1,7 @@
 import { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
 import { NavBar } from '@/components/NavBar';
 import { useMessagesDrawer } from '@/hooks/useMessagesDrawer';
-
-/** Single source of truth for the policy pages' paths and labels. */
-export const POLICY_LINKS = [
-  { path: '/shipping-policy', label: 'Shipping' },
-  { path: '/refund-policy', label: 'Refunds' },
-  { path: '/privacy-policy', label: 'Privacy' },
-  { path: '/terms-of-service', label: 'Terms' },
-] as const;
+import { SiteFooter } from '@/components/SiteFooter';
 
 /** Inline "message Eden" affordance used across the policy pages. */
 export function MessageEdenLink({ children }: { children: ReactNode }) {
@@ -41,17 +33,7 @@ export function PolicyLayout({ title, children }: { title: string; children: Rea
         </div>
       </main>
 
-      <footer className="bg-gradient-to-br from-violet-100 to-indigo-100 py-8 mt-24">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-violet-700">
-            {POLICY_LINKS.map(({ path, label }) => (
-              <Link key={path} to={path} className="hover:text-violet-900 underline">
-                {label}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { usePosts } from '@/hooks/usePosts';
 import { useUnifiedProducts } from '@/hooks/useUnifiedProducts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { NavBar } from '@/components/NavBar';
+import { SiteFooter } from '@/components/SiteFooter';
 import { ZapButton } from '@/components/ZapButton';
 import { Images } from 'lucide-react';
 import type { NostrEvent } from '@nostrify/nostrify';
@@ -236,41 +237,7 @@ const Gallery = () => {
         )}
       </div>
 
-      {/* Footer */}
-      <footer className="bg-gradient-to-br from-violet-100 to-indigo-100 py-12 mt-24">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col items-center justify-center space-y-6">
-            <div className="flex items-center gap-3">
-              <img
-                src="/logo.jpg"
-                alt="Eden Weeks Logo"
-                className="h-12 w-auto"
-              />
-              <span className="font-serif text-2xl font-bold text-violet-900">
-                Eden Weeks
-              </span>
-            </div>
-
-            <p className="text-violet-700 text-center max-w-md">
-              Young artist from Cambridgeshire, England. Creating original artwork
-              and custom commissions with passion.
-            </p>
-
-            <div className="flex items-center gap-2 text-sm text-violet-600">
-              <span>Powered by Nostr & Bitcoin</span>
-              <span>•</span>
-              <a
-                href="https://shakespeare.diy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-violet-900 transition-colors underline"
-              >
-                Vibed with Shakespeare
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 };
