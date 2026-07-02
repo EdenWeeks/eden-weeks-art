@@ -2,7 +2,6 @@ import { useSeoMeta } from '@unhead/react';
 import { Link } from 'react-router-dom';
 import { Masonry } from 'react-plock';
 import { useUnifiedProducts } from '@/hooks/useUnifiedProducts';
-import { OwnerToolbar } from '@/components/admin/OwnerToolbar';
 import { POLICY_LINKS } from '@/components/PolicyLayout';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,7 +22,6 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-white">
       <NavBar />
-      <OwnerToolbar />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden min-h-[80vh] flex items-center">

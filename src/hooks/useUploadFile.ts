@@ -12,10 +12,14 @@ export function useUploadFile() {
         throw new Error('Must be logged in to upload files');
       }
 
+      // Comma-separated list in VITE_BLOSSOM_SERVERS; primal is the fallback.
+      const servers = (import.meta.env.VITE_BLOSSOM_SERVERS as string | undefined)
+        ?.split(',')
+        .map((server) => server.trim())
+        .filter(Boolean) ?? ['https://blossom.primal.net/'];
+
       const uploader = new BlossomUploader({
-        servers: [
-          'https://blossom.primal.net/',
-        ],
+        servers,
         signer: user.signer,
       });
 
