@@ -7,6 +7,7 @@ interface Nip44Signer {
   signer: {
     nip44?: {
       encrypt(pubkey: string, plaintext: string): Promise<string>;
+      decrypt(pubkey: string, ciphertext: string): Promise<string>;
     };
   };
 }
@@ -85,4 +86,29 @@ export async function giftWrap(
   ]);
 
   return { recipientWrap, senderWrap };
+}
+
+/**
+ * Unwrap a kind-1059 gift wrap addressed to the user: decrypt the wrap with
+ * the ephemeral sender key, verify the kind-13 seal, and return the inner
+ * rumor. Returns null for anything that fails to decrypt or parse.
+ */
+export async function unwrapGiftWrap(
+  user: Nip44Signer,
+  wrap: NostrEvent
+): Promise<(Rumor & { pubkey: string }) | null> {
+  if (!user.signer.nip44 || wrap.kind !== 1059) return null;
+  try {
+    const sealJson = await user.signer.nip44.decrypt(wrap.pubkey, wrap.content);
+    const seal = JSON.parse(sealJson) as NostrEvent;
+    if (seal.kind !== 13) return null;
+    const rumorJson = await user.signer.nip44.decrypt(seal.pubkey, seal.content);
+    const rumor = JSON.parse(rumorJson) as Rumor & { pubkey: string };
+    // The seal author is the true sender; a rumor claiming a different pubkey
+    // would be a spoof, so normalize to the seal's.
+    rumor.pubkey = seal.pubkey;
+    return rumor;
+  } catch {
+    return null;
+  }
 }

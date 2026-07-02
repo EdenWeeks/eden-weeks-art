@@ -54,7 +54,8 @@ export function createOrderRumor(
   orderId: string,
   items: GammaOrderItem[],
   shipping: GammaOrderShipping,
-  merchantPubkey: string
+  merchantPubkey: string,
+  totalSats?: number
 ): { kind: number; content: string; tags: string[][]; created_at: number } {
   const tags: string[][] = [
     ['p', merchantPubkey],
@@ -62,6 +63,10 @@ export function createOrderRumor(
     ['type', ORDER_MESSAGE_TYPE.ORDER_CREATION],
     ['order', orderId],
   ];
+  // All-in total in sats — the order service requires this to invoice.
+  if (totalSats && Number.isFinite(totalSats) && totalSats > 0) {
+    tags.push(['amount', Math.round(totalSats).toString()]);
+  }
 
   for (const item of items) {
     tags.push(['item', `${PRODUCT_KIND}:${item.productPubkey}:${item.productId}`, item.quantity.toString()]);
