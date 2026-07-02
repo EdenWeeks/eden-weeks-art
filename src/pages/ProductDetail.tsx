@@ -1,7 +1,7 @@
 import { useSeoMeta } from '@unhead/react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { useProduct } from '@/hooks/useProducts';
+import { useUnifiedProduct } from '@/hooks/useUnifiedProducts';
 import { useStall } from '@/hooks/useStall';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,9 +9,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { NavBar } from '@/components/NavBar';
-import { CommentsSection } from '@/components/comments/CommentsSection';
+import { ProductFeedbackTabs } from '@/components/ProductFeedbackTabs';
 import { ZapButton } from '@/components/ZapButton';
 import { CheckoutDialog } from '@/components/CheckoutDialog';
+import { GammaCheckoutDialog } from '@/components/GammaCheckoutDialog';
+import { productReviewCoord } from '@/lib/productReviews';
+import { OwnerProductActions } from '@/components/admin/OwnerProductActions';
 
 const EDEN_PUBKEY = import.meta.env.VITE_EDEN_PUBKEY;
 const STALL_ID = import.meta.env.VITE_STALL_ID;
@@ -19,14 +22,14 @@ const STALL_ID = import.meta.env.VITE_STALL_ID;
 const ProductDetail = () => {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
-  const { data: product, isLoading } = useProduct(EDEN_PUBKEY, productId || '');
+  const { data: product, isLoading } = useUnifiedProduct(productId || '');
   const { data: stall } = useStall(EDEN_PUBKEY, STALL_ID);
   const [selectedImage, setSelectedImage] = useState(0);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   useSeoMeta({
-    title: product ? `${product.data.name} - Eden Weeks Art` : 'Product - Eden Weeks Art',
-    description: product?.data.description || 'View this beautiful artwork by Eden Weeks',
+    title: product ? `${product.name} - Eden Weeks Art` : 'Product - Eden Weeks Art',
+    description: product?.description || 'View this beautiful artwork by Eden Weeks',
   });
 
   if (isLoading) {
@@ -82,8 +85,9 @@ const ProductDetail = () => {
     );
   }
 
-  const images = product.data.images || [];
-  const isAvailable = product.data.quantity === null || product.data.quantity > 0;
+  const images = product.images;
+  const isAvailable = product.stock == null || product.stock > 0;
+  const specs = product.nip15?.specs ?? product.gamma?.specs;
 
   return (
     <div className="min-h-screen bg-white">
@@ -103,7 +107,7 @@ const ProductDetail = () => {
                 <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted shadow-xl">
                   <img
                     src={images[selectedImage]}
-                    alt={product.data.name}
+                    alt={product.name}
                     className="w-full h-full object-cover"
                   />
                   {!isAvailable && (
@@ -129,7 +133,7 @@ const ProductDetail = () => {
                       >
                         <img
                           src={image}
-                          alt={`${product.data.name} - View ${index + 1}`}
+                          alt={`${product.name} - View ${index + 1}`}
                           className="w-full h-full object-cover"
                         />
                       </button>
@@ -149,29 +153,28 @@ const ProductDetail = () => {
 
           {/* Product Info */}
           <div className="space-y-8">
+            <OwnerProductActions product={product} onDeleted={() => navigate('/')} />
             <div>
               <h1 className="font-serif text-4xl sm:text-5xl font-bold text-foreground mb-4">
-                {product.data.name}
+                {product.name}
               </h1>
 
               <div className="flex items-baseline gap-3 mb-6">
                 <span className="text-4xl font-bold text-foreground">
-                  {product.data.price.toLocaleString()}
+                  {product.price.toLocaleString()}
                 </span>
                 <span className="text-xl text-muted-foreground">
-                  {product.data.currency}
+                  {product.currency}
                 </span>
               </div>
 
               <div className="flex items-center gap-4">
-                {product.data.quantity !== null && (
+                {product.stock != null && (
                   <Badge
                     variant={isAvailable ? "default" : "secondary"}
                     className="text-sm"
                   >
-                    {isAvailable
-                      ? `${product.data.quantity} available`
-                      : 'Out of stock'}
+                    {isAvailable ? `${product.stock} available` : 'Out of stock'}
                   </Badge>
                 )}
                 <div className="flex items-center gap-2 bg-amber-50 hover:bg-amber-100 rounded-full px-4 py-2 transition-colors cursor-pointer">
@@ -180,21 +183,21 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {product.data.description && (
+            {product.description && (
               <div className="prose prose-lg max-w-none">
                 <p className="text-muted-foreground leading-relaxed">
-                  {product.data.description}
+                  {product.description}
                 </p>
               </div>
             )}
 
             {/* Specifications */}
-            {product.data.specs && product.data.specs.length > 0 && (
+            {specs && specs.length > 0 && (
               <Card>
                 <CardContent className="p-6">
                   <h3 className="font-semibold text-lg mb-4">Specifications</h3>
                   <dl className="space-y-3">
-                    {product.data.specs.map(([key, value], index) => (
+                    {specs.map(([key, value], index) => (
                       <div key={index} className="flex justify-between text-sm">
                         <dt className="text-muted-foreground capitalize">
                           {key.replace(/_/g, ' ')}:
@@ -226,13 +229,13 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* Comments Section */}
+        {/* Reviews & Comments. Reviews always target the NIP-99 (30402)
+            coordinate — the migration keeps the product id, so reviews written
+            against a NIP-15 listing survive its transfer to Gamma. */}
         <div className="mt-16">
-          <CommentsSection
-            root={product.event}
-            title="Comments & Discussion"
-            emptyStateMessage="No comments yet"
-            emptyStateSubtitle="Be the first to share your thoughts about this artwork!"
+          <ProductFeedbackTabs
+            event={product.event}
+            coord={productReviewCoord(EDEN_PUBKEY, product.id)}
           />
         </div>
       </div>
@@ -273,22 +276,26 @@ const ProductDetail = () => {
         </div>
       </footer>
 
-      {/* Checkout Dialog */}
-      {product && stall && (
+      {/* Checkout: NIP-15 listings keep the LNbits flow; Gamma listings use
+          the country-first Gamma order flow. */}
+      {product.protocol === 'nip15' && product.nip15 && stall && (
         <CheckoutDialog
           open={checkoutOpen}
           onOpenChange={setCheckoutOpen}
           merchantPubkey={EDEN_PUBKEY}
           product={{
-            id: product.data.id,
-            name: product.data.name,
-            price: product.data.price,
-            currency: product.data.currency,
-            images: product.data.images,
-            shipping: product.data.shipping,
+            id: product.nip15.id,
+            name: product.nip15.name,
+            price: product.nip15.price,
+            currency: product.nip15.currency,
+            images: product.nip15.images,
+            shipping: product.nip15.shipping,
           }}
           shippingZones={stall.data.shipping || []}
         />
+      )}
+      {product.protocol === 'gamma' && (
+        <GammaCheckoutDialog open={checkoutOpen} onOpenChange={setCheckoutOpen} product={product} />
       )}
     </div>
   );

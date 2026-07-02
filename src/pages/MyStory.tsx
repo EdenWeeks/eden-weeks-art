@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { NoteContent } from '@/components/NoteContent';
+import { StoryReplies } from '@/components/StoryReplies';
 import { NavBar } from '@/components/NavBar';
 import { ZapButton } from '@/components/ZapButton';
 import { ArrowLeft, Heart, X } from 'lucide-react';
@@ -154,6 +155,9 @@ const MyStory = () => {
                           />
                         </div>
                       </div>
+
+                      {/* Replies (NIP-10 kind-1 thread) */}
+                      <StoryReplies note={post} />
                     </div>
                   </div>
                 </CardContent>

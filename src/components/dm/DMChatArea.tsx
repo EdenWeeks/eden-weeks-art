@@ -226,7 +226,10 @@ export const DMChatArea = ({ pubkey, onBack, className }: DMChatAreaProps) => {
   const getDefaultProtocol = () => {
     if (protocolMode === PROTOCOL_MODE.NIP04_ONLY) return MESSAGE_PROTOCOL.NIP04;
     if (protocolMode === PROTOCOL_MODE.NIP17_ONLY) return MESSAGE_PROTOCOL.NIP17;
-    if (protocolMode === PROTOCOL_MODE.NIP04_OR_NIP17) return MESSAGE_PROTOCOL.NIP17;
+    // Default to NIP-04 in mixed mode: Eden's order tooling (LNbits Nostr
+    // Market) reads kind-4 DMs, so that's the safe default; users can still
+    // switch to NIP-17 in the selector.
+    if (protocolMode === PROTOCOL_MODE.NIP04_OR_NIP17) return MESSAGE_PROTOCOL.NIP04;
     // Fallback to NIP-17 for any unexpected mode
     return MESSAGE_PROTOCOL.NIP17;
   };

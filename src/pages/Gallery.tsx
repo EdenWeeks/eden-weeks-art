@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useSeoMeta } from '@unhead/react';
 import { Link } from 'react-router-dom';
 import { usePosts } from '@/hooks/usePosts';
-import { useProducts } from '@/hooks/useProducts';
+import { useUnifiedProducts } from '@/hooks/useUnifiedProducts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { NavBar } from '@/components/NavBar';
 import { ZapButton } from '@/components/ZapButton';
@@ -10,7 +10,6 @@ import { Images } from 'lucide-react';
 import type { NostrEvent } from '@nostrify/nostrify';
 
 const EDEN_PUBKEY = import.meta.env.VITE_EDEN_PUBKEY;
-const STALL_ID = import.meta.env.VITE_STALL_ID;
 
 // Media detection patterns
 const IMAGE_EXTENSIONS = /\.(jpg|jpeg|png|gif|webp|svg|avif)(\?.*)?$/i;
@@ -70,7 +69,7 @@ const Gallery = () => {
   });
 
   const { data: posts, isLoading: postsLoading } = usePosts(EDEN_PUBKEY, 100, { excludeReplies: true, mediaOnly: true });
-  const { data: products, isLoading: productsLoading } = useProducts(EDEN_PUBKEY, STALL_ID);
+  const { data: products, isLoading: productsLoading } = useUnifiedProducts();
 
   const isLoading = postsLoading || productsLoading;
 
@@ -82,14 +81,14 @@ const Gallery = () => {
     // Extract from products first (higher priority)
     if (products) {
       products.forEach(product => {
-        product.data.images?.forEach(url => {
+        product.images.forEach(url => {
           if (!seenUrls.has(url) && !BLOCKED_URLS.has(url)) {
             seenUrls.add(url);
             items.push({
               url,
               type: 'image',
               source: 'product',
-              productId: product.data.id,
+              productId: product.id,
               event: product.event,
             });
           }
