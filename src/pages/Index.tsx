@@ -387,6 +387,13 @@ const Index = () => {
               </a>
             </div>
 
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-violet-600">
+              <Link to="/shipping-policy" className="hover:text-violet-900 underline">Shipping</Link>
+              <Link to="/refund-policy" className="hover:text-violet-900 underline">Refunds</Link>
+              <Link to="/privacy-policy" className="hover:text-violet-900 underline">Privacy</Link>
+              <Link to="/terms-of-service" className="hover:text-violet-900 underline">Terms</Link>
+            </div>
+
             <div className="flex items-center gap-2 text-sm text-violet-600">
               <span>Powered by Nostr & Bitcoin</span>
               <span>|</span>
