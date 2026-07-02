@@ -21,7 +21,11 @@ function loadEnvFile() {
         const value = valueParts.join('=').trim();
         // Remove quotes if present
         const unquoted = value.replace(/^["']|["']$/g, '');
-        process.env[key.trim()] = unquoted;
+        // Runtime-provided env (Docker/CI) wins over the .env file, so
+        // injected secrets are never silently overridden by a stale file.
+        if (process.env[key.trim()] === undefined) {
+          process.env[key.trim()] = unquoted;
+        }
       }
     }
     console.log('[Config] Loaded .env file');

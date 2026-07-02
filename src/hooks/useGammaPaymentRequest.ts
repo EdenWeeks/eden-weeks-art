@@ -33,8 +33,10 @@ export function useGammaPaymentRequest(orderId: string | null) {
       if (!user || !orderId) return null;
       const signal = AbortSignal.any([c.signal, AbortSignal.timeout(8000)]);
       const twoDays = 2 * 24 * 60 * 60;
+      // Relays return newest-first; the payment request is always fresh, so a
+      // capped page bounds the decrypt work per poll while still converging.
       const wraps = await nostr.query(
-        [{ kinds: [1059], '#p': [user.pubkey], since: Math.floor(Date.now() / 1000) - twoDays - 3600 }],
+        [{ kinds: [1059], '#p': [user.pubkey], since: Math.floor(Date.now() / 1000) - twoDays - 3600, limit: 50 }],
         { signal }
       );
 
