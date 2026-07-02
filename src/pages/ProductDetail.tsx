@@ -9,10 +9,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { NavBar } from '@/components/NavBar';
-import { CommentsSection } from '@/components/comments/CommentsSection';
+import { ProductFeedbackTabs } from '@/components/ProductFeedbackTabs';
 import { ZapButton } from '@/components/ZapButton';
 import { CheckoutDialog } from '@/components/CheckoutDialog';
 import { GammaCheckoutDialog } from '@/components/GammaCheckoutDialog';
+import { productReviewCoord } from '@/lib/productReviews';
 import { OwnerProductActions } from '@/components/admin/OwnerProductActions';
 
 const EDEN_PUBKEY = import.meta.env.VITE_EDEN_PUBKEY;
@@ -228,13 +229,13 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* Comments Section */}
+        {/* Reviews & Comments. Reviews always target the NIP-99 (30402)
+            coordinate — the migration keeps the product id, so reviews written
+            against a NIP-15 listing survive its transfer to Gamma. */}
         <div className="mt-16">
-          <CommentsSection
-            root={product.event}
-            title="Comments & Discussion"
-            emptyStateMessage="No comments yet"
-            emptyStateSubtitle="Be the first to share your thoughts about this artwork!"
+          <ProductFeedbackTabs
+            event={product.event}
+            coord={productReviewCoord(EDEN_PUBKEY, product.id)}
           />
         </div>
       </div>
