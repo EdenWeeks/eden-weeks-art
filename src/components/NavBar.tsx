@@ -113,27 +113,31 @@ export function NavBar() {
                   Shop
                 </a>
               </Button>
-              {eden?.event && (
-                <ZapDialog target={eden.event}>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Zap Eden"
-                    title="Enjoying Eden's work? Send her a zap ⚡"
-                    className="text-amber-500 hover:text-amber-600"
-                  >
-                    <Zap className="h-5 w-5" />
-                  </Button>
-                </ZapDialog>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={openMessages}
-                aria-label="Messages"
-              >
-                <MessageCircle className="h-5 w-5" />
-              </Button>
+              {/* Icon cluster: zap + messages sit tightly together, matching
+                  the Lightning Piggy header's story/zap/chat grouping. */}
+              <div className="flex items-center gap-1 -ml-2">
+                {eden?.event && (
+                  <ZapDialog target={eden.event}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Zap Eden"
+                      title="Enjoying Eden's work? Send her a zap ⚡"
+                      className="text-amber-500 hover:text-amber-600"
+                    >
+                      <Zap className="h-5 w-5" />
+                    </Button>
+                  </ZapDialog>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={openMessages}
+                  aria-label="Messages"
+                >
+                  <MessageCircle className="h-5 w-5" />
+                </Button>
+              </div>
               <LoginArea />
             </div>
 
