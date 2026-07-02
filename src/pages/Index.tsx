@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Masonry } from 'react-plock';
 import { useUnifiedProducts } from '@/hooks/useUnifiedProducts';
 import { OwnerToolbar } from '@/components/admin/OwnerToolbar';
+import { POLICY_LINKS } from '@/components/PolicyLayout';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -385,6 +386,14 @@ const Index = () => {
               >
                 <img src="/github-logo.png" alt="GitHub" className="h-8 w-auto" />
               </a>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-violet-600">
+              {POLICY_LINKS.map(({ path, label }) => (
+                <Link key={path} to={path} className="hover:text-violet-900 underline">
+                  {label}
+                </Link>
+              ))}
             </div>
 
             <div className="flex items-center gap-2 text-sm text-violet-600">
