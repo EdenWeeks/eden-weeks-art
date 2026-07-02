@@ -2,6 +2,7 @@ import { useSeoMeta } from '@unhead/react';
 import { Link } from 'react-router-dom';
 import { Masonry } from 'react-plock';
 import { useUnifiedProducts } from '@/hooks/useUnifiedProducts';
+import { FollowMeButton } from '@/components/FollowMeButton';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -208,12 +209,15 @@ const Index = () => {
                       </li>
                     </ul>
 
-                    <Button className="mt-4" asChild>
-                      <Link to="/my-story">
-                        <Heart className="w-4 h-4 mr-2" />
-                        My Story
-                      </Link>
-                    </Button>
+                    <div className="mt-4 flex flex-wrap items-start gap-4">
+                      <Button asChild>
+                        <Link to="/my-story">
+                          <Heart className="w-4 h-4 mr-2" />
+                          My Story
+                        </Link>
+                      </Button>
+                      <FollowMeButton size="default" showViewOnNostr={false} />
+                    </div>
                     </div>
                   </div>
                 </div>
