@@ -14,7 +14,7 @@ RUN npx vite build -l error && cp dist/index.html dist/404.html
 FROM node:22-alpine
 
 WORKDIR /app
-RUN npm install -g serve
+RUN npm install -g serve@14.2.6
 
 COPY --from=builder /app/dist ./dist
 
