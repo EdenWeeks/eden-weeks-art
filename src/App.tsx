@@ -59,8 +59,9 @@ export function App() {
               <NWCProvider>
                 <TooltipProvider>
                   <Toaster />
-                  {/* NIP04_ONLY: orders and replies flow over kind 4 DMs (LNbits Nostr Market) */}
-                  <DMProvider config={{ enabled: true, protocolMode: PROTOCOL_MODE.NIP04_ONLY }}>
+                  {/* Both protocols: NIP-15/LNbits orders flow over kind-4 DMs,
+                      Gamma (NIP-99) orders over NIP-17 gift wraps */}
+                  <DMProvider config={{ enabled: true, protocolMode: PROTOCOL_MODE.NIP04_OR_NIP17 }}>
                     <MessagesDrawerProvider>
                       <Suspense>
                         <AppRouter />
