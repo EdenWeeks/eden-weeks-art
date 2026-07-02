@@ -5,6 +5,21 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # Manually managed exact pins: @nostrify/react and @nostrify/nostrify
+      # must move together (0.x minors are breaking; mismatches nest a second
+      # incompatible copy — see PR #14). Upgrade deliberately, not via bot.
+      - dependency-name: "@nostrify/*"
+      # Blocked majors — remove each entry once the blocker clears:
+      # eslint 10: @html-eslint/eslint-plugin peers on eslint <=9
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
+      # date-fns 4: react-day-picker 8.x peers on date-fns ^2 || ^3
+      - dependency-name: date-fns
+        update-types: ["version-update:semver-major"]
+      # @unhead/addons 3.x pulls a second unhead incompatible with @unhead/react 2.x
+      - dependency-name: "@unhead/*"
+        update-types: ["version-update:semver-major"]
     groups:
       minor-and-patch:
         update-types: [minor, patch]
