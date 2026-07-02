@@ -64,6 +64,11 @@ export function FollowMeButton({
   const loginSucceededRef = useRef(false);
   // Optimistic "Following" state, set the moment a publish succeeds.
   const [justFollowed, setJustFollowed] = useState(false);
+  // In-flight guard covering the WHOLE follow operation (read + publish) —
+  // isPublishing only covers the publish, so rapid clicks (or the post-login
+  // auto-follow racing a click) could otherwise start concurrent follows off
+  // the same base event and clobber each other's additions.
+  const followInFlightRef = useRef(false);
 
   // The signed-in user's latest kind-3 contact list (their follows).
   const { data: contactList } = useQuery({
@@ -82,6 +87,9 @@ export function FollowMeButton({
     justFollowed || (!!contactList && isFollowing(contactList.tags, MERCHANT_PUBKEY));
 
   const follow = async () => {
+    if (followInFlightRef.current) return;
+    followInFlightRef.current = true;
+    try {
     // Read the freshest kind-3 at click time so we never clobber follows added
     // since mount. `contactList === undefined` means the mount query has not
     // resolved yet (unknown list); `null` means it resolved to "no kind-3".
@@ -132,6 +140,9 @@ export function FollowMeButton({
         description: error instanceof Error ? error.message : 'Failed to update your follow list.',
         variant: 'destructive',
       });
+    }
+    } finally {
+      followInFlightRef.current = false;
     }
   };
 
