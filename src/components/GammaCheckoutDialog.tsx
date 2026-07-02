@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/select';
 import LoginDialog from '@/components/auth/LoginDialog';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useToast } from '@/hooks/useToast';
 import { useGammaCheckout } from '@/hooks/useGammaCheckout';
 import { useMerchantShippingOptions } from '@/hooks/useMerchantShippingOptions';
 import { useMessagesDrawer } from '@/hooks/useMessagesDrawer';
@@ -46,6 +47,7 @@ export function GammaCheckoutDialog({ open, onOpenChange, product }: GammaChecko
   const { data: shippingEvents } = useMerchantShippingOptions();
   const { mutateAsync: submitOrder, isPending } = useGammaCheckout();
   const { openMessages } = useMessagesDrawer();
+  const { toast } = useToast();
 
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [step, setStep] = useState<'details' | 'sent'>('details');
@@ -102,34 +104,62 @@ export function GammaCheckoutDialog({ open, onOpenChange, product }: GammaChecko
       return;
     }
     const countryLabel = countries.find((entry) => entry.code === country)?.name ?? country;
-    const result = await submitOrder({
-      item: {
-        productId: product.id,
-        productPubkey: product.event.pubkey,
-        title: product.name,
-        quantity: 1,
-        priceAmount: String(product.price),
-        priceCurrency: product.currency,
-      },
-      shipping: {
-        name,
-        address,
-        city,
-        postcode,
-        country: countryLabel,
-        email,
-        phone: phone || undefined,
-        message: message || undefined,
-      },
-      shippingOption: selectedOption,
-    });
-    setOrderId(result.orderId);
-    setStep('sent');
+    try {
+      const result = await submitOrder({
+        item: {
+          productId: product.id,
+          productPubkey: product.event.pubkey,
+          title: product.name,
+          quantity: 1,
+          priceAmount: String(product.price),
+          priceCurrency: product.currency,
+        },
+        shipping: {
+          name,
+          address,
+          city,
+          postcode,
+          country: countryLabel,
+          email,
+          phone: phone || undefined,
+          message: message || undefined,
+        },
+        shippingOption: selectedOption,
+      });
+      setOrderId(result.orderId);
+      setStep('sent');
+    } catch (error) {
+      console.error('Gamma checkout failed:', error);
+      toast({
+        title: 'Could not send order',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      // Fresh dialog next time — otherwise a completed order's "sent" screen
+      // (and the previous address) would greet the next checkout.
+      setStep('details');
+      setOrderId(null);
+      setShippingId('');
+      setName('');
+      setAddress('');
+      setCity('');
+      setPostcode('');
+      setEmail('');
+      setPhone('');
+      setMessage('');
+      setShowLoginDialog(false);
+    }
+    onOpenChange(nextOpen);
   };
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           {step === 'details' ? (
             <>
@@ -184,7 +214,7 @@ export function GammaCheckoutDialog({ open, onOpenChange, product }: GammaChecko
                       type="button"
                       className="underline hover:text-primary"
                       onClick={() => {
-                        onOpenChange(false);
+                        handleOpenChange(false);
                         openMessages();
                       }}
                     >
@@ -317,7 +347,7 @@ export function GammaCheckoutDialog({ open, onOpenChange, product }: GammaChecko
                 <Button
                   className="w-full"
                   onClick={() => {
-                    onOpenChange(false);
+                    handleOpenChange(false);
                     openMessages();
                   }}
                 >

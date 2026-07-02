@@ -38,7 +38,8 @@ export function parseShippingOptionEvent(
   const countries = event.tags
     .filter(([name]) => name === 'country')
     .flatMap(([, ...codes]) => codes)
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((code) => code.toUpperCase());
 
   const regions = event.tags
     .filter(([name]) => name === 'region')

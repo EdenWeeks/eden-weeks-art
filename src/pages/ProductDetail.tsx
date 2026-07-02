@@ -86,6 +86,7 @@ const ProductDetail = () => {
 
   const images = product.images;
   const isAvailable = product.stock == null || product.stock > 0;
+  const specs = product.nip15?.specs ?? product.gamma?.specs;
 
   return (
     <div className="min-h-screen bg-white">
@@ -190,12 +191,12 @@ const ProductDetail = () => {
             )}
 
             {/* Specifications */}
-            {(product.nip15?.specs ?? product.gamma?.specs) && (product.nip15?.specs ?? product.gamma?.specs)!.length > 0 && (
+            {specs && specs.length > 0 && (
               <Card>
                 <CardContent className="p-6">
                   <h3 className="font-semibold text-lg mb-4">Specifications</h3>
                   <dl className="space-y-3">
-                    {(product.nip15?.specs ?? product.gamma?.specs)!.map(([key, value], index) => (
+                    {specs.map(([key, value], index) => (
                       <div key={index} className="flex justify-between text-sm">
                         <dt className="text-muted-foreground capitalize">
                           {key.replace(/_/g, ' ')}:
