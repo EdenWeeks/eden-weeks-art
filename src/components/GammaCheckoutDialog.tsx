@@ -388,7 +388,16 @@ export function GammaCheckoutDialog({ open, onOpenChange, product }: GammaChecko
                           setIsPaying(true);
                           const result = await payWithWebLN(paymentRequest.invoice);
                           setIsPaying(false);
-                          if (result.success) setStep('paid');
+                          if (result.success) {
+                            setStep('paid');
+                          } else {
+                            toast({
+                              title: 'Payment not completed',
+                              description:
+                                'No browser wallet responded — open the invoice in a wallet app or copy it instead.',
+                              variant: 'destructive',
+                            });
+                          }
                         }}
                       >
                         {isPaying ? (
@@ -408,9 +417,17 @@ export function GammaCheckoutDialog({ open, onOpenChange, product }: GammaChecko
                         variant="outline"
                         className="w-full"
                         onClick={async () => {
-                          await navigator.clipboard.writeText(paymentRequest.invoice);
-                          setCopied(true);
-                          setTimeout(() => setCopied(false), 2000);
+                          try {
+                            await navigator.clipboard.writeText(paymentRequest.invoice);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                          } catch {
+                            toast({
+                              title: 'Could not copy',
+                              description: 'Clipboard unavailable — long-press or select the invoice in a wallet app instead.',
+                              variant: 'destructive',
+                            });
+                          }
                         }}
                       >
                         {copied ? (

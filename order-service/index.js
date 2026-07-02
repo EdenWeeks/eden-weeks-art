@@ -126,7 +126,6 @@ export async function handleOrder(
     console.log(`[Order] Skipping duplicate order ${order.orderId.slice(0, 8)}`);
     return;
   }
-  store.addOrder(order.orderId);
 
   console.log(`[Order] New order received!`);
   console.log(`  Order ID: ${order.orderId.slice(0, 8)}`);
@@ -141,6 +140,11 @@ export async function handleOrder(
     // Generate Lightning invoice
     console.log(`[Order] Generating invoice for ${order.amount} sats...`);
     const invoice = await genInvoice(config.lightningAddress, order.amount, order.orderId);
+
+    // Mark processed only now that an invoice exists: a generation failure
+    // above retries on the next poll, while anything after this point never
+    // risks generating (and possibly collecting) a second invoice.
+    store.addOrder(order.orderId);
 
     // Build the Kind 16 Type 2 payment request rumor and gift-wrap it to the buyer.
     // The structured invoice data lives in the rumor tags; we fold a human-readable

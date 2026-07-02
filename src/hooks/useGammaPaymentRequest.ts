@@ -47,11 +47,11 @@ export function useGammaPaymentRequest(orderId: string | null) {
         if (get('order')?.[1] !== orderId) continue;
         const payment = get('payment');
         if (payment?.[1] !== 'lightning' || !payment?.[2]) continue;
-        const amountTag = get('amount')?.[1];
+        const parsedAmount = parseInt(get('amount')?.[1] ?? '', 10);
         return {
           orderId,
           invoice: payment[2],
-          amountSats: amountTag ? parseInt(amountTag, 10) : undefined,
+          amountSats: Number.isFinite(parsedAmount) ? parsedAmount : undefined,
           message: rumor.content || undefined,
         };
       }

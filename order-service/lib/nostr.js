@@ -1,3 +1,4 @@
+import { getPublicKey as getPubkey } from 'nostr-tools/pure';
 /**
  * Nostr client for publishing events and subscribing to orders
  */
@@ -27,7 +28,6 @@ export function decodeNsec(nsec) {
  * @returns {string} - Hex-encoded public key
  */
 export function getPublicKey(secretKey) {
-  const { getPublicKey: getPubkey } = require('nostr-tools/pure');
   return getPubkey(secretKey);
 }
 
