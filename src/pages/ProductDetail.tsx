@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { NavBar } from '@/components/NavBar';
+import { ReleaseVersionLink } from '@/components/ReleaseVersionLink';
 import { ProductFeedbackTabs } from '@/components/ProductFeedbackTabs';
 import { ZapButton } from '@/components/ZapButton';
 import { CheckoutDialog } from '@/components/CheckoutDialog';
@@ -272,15 +273,7 @@ const ProductDetail = () => {
                 Vibed with Shakespeare
               </a>
               <span>|</span>
-              <a
-                href={`https://github.com/EdenWeeks/eden-weeks-art/releases/tag/v${__APP_VERSION__}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-violet-900 transition-colors underline"
-                title="Deployed site version (release tag)"
-              >
-                v{__APP_VERSION__}
-              </a>
+              <ReleaseVersionLink />
             </div>
           </div>
         </div>

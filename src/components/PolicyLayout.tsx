@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { NavBar } from '@/components/NavBar';
 import { useMessagesDrawer } from '@/hooks/useMessagesDrawer';
+import { ReleaseVersionLink } from '@/components/ReleaseVersionLink';
 
 /** Single source of truth for the policy pages' paths and labels. */
 export const POLICY_LINKS = [
@@ -49,15 +50,7 @@ export function PolicyLayout({ title, children }: { title: string; children: Rea
                 {label}
               </Link>
             ))}
-            <a
-              href={`https://github.com/EdenWeeks/eden-weeks-art/releases/tag/v${__APP_VERSION__}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-violet-900 underline"
-              title="Deployed site version (release tag)"
-            >
-              v{__APP_VERSION__}
-            </a>
+            <ReleaseVersionLink className="hover:text-violet-900 underline" />
           </div>
         </div>
       </footer>

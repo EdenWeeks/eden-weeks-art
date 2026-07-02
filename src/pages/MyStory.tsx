@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { NoteContent } from '@/components/NoteContent';
 import { StoryReplies } from '@/components/StoryReplies';
 import { NavBar } from '@/components/NavBar';
+import { ReleaseVersionLink } from '@/components/ReleaseVersionLink';
 import { ZapButton } from '@/components/ZapButton';
 import { ArrowLeft, Heart, X } from 'lucide-react';
 
@@ -238,15 +239,7 @@ const MyStory = () => {
                 Vibed with Shakespeare
               </a>
               <span>|</span>
-              <a
-                href={`https://github.com/EdenWeeks/eden-weeks-art/releases/tag/v${__APP_VERSION__}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-violet-900 transition-colors underline"
-                title="Deployed site version (release tag)"
-              >
-                v{__APP_VERSION__}
-              </a>
+              <ReleaseVersionLink />
             </div>
           </div>
         </div>
