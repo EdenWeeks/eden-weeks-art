@@ -7,15 +7,16 @@
     "dev": "npm i --silent && vite",
     "build": "npm i --silent && vite build -l error && cp dist/index.html dist/404.html && echo 'Project built successfully!'",
     "test": "npm i --silent && tsc --noEmit && eslint && vitest run --reporter=dot --silent && vite build -l error && cp dist/index.html dist/404.html && echo 'All tests passed!'",
-    "deploy": "npm run build && npx -y nostr-deploy-cli deploy --skip-setup"
+    "deploy": "npm run build && npx -y nostr-deploy-cli deploy --skip-setup",
+    "dev:test": "npm i --silent && vite --mode test"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.6",
     "@fontsource-variable/playfair-display": "^5.2.8",
     "@getalby/sdk": "^5.1.1",
-    "@hookform/resolvers": "^3.9.0",
-    "@nostrify/nostrify": "^0.47.1",
-    "@nostrify/react": "^0.2.17",
+    "@hookform/resolvers": "^5.4.0",
+    "@nostrify/nostrify": "0.50.5",
+    "@nostrify/react": "0.2.31",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
@@ -69,7 +70,7 @@
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.3",
-    "zod": "^3.25.71"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
