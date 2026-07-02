@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Check, Loader2, MessageCircle, ShoppingBag, Zap } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Check, Copy, ExternalLink, Loader2, MessageCircle, ShoppingBag, Zap } from 'lucide-react';
 
 import {
   Dialog,
@@ -26,6 +26,10 @@ import { useToast } from '@/hooks/useToast';
 import { useGammaCheckout } from '@/hooks/useGammaCheckout';
 import { useMerchantShippingOptions } from '@/hooks/useMerchantShippingOptions';
 import { useMessagesDrawer } from '@/hooks/useMessagesDrawer';
+import { useExchangeRate } from '@/hooks/useExchangeRate';
+import { useGammaPaymentRequest } from '@/hooks/useGammaPaymentRequest';
+import { payWithWebLN } from '@/lib/lightning';
+import QRCode from 'qrcode';
 import { parseShippingOptionEvent, type ShippingOptionData } from '@/lib/productUtils';
 import { allCountries, detectLocaleCountry } from '@/lib/countries';
 import type { UnifiedProduct } from '@/hooks/useUnifiedProducts';
@@ -48,9 +52,10 @@ export function GammaCheckoutDialog({ open, onOpenChange, product }: GammaChecko
   const { mutateAsync: submitOrder, isPending } = useGammaCheckout();
   const { openMessages } = useMessagesDrawer();
   const { toast } = useToast();
+  const { convertToSats } = useExchangeRate();
 
   const [showLoginDialog, setShowLoginDialog] = useState(false);
-  const [step, setStep] = useState<'details' | 'sent'>('details');
+  const [step, setStep] = useState<'details' | 'sent' | 'paid'>('details');
   const [orderId, setOrderId] = useState<string | null>(null);
 
   const [country, setCountry] = useState<string>(() => detectLocaleCountry() ?? '');
@@ -62,6 +67,24 @@ export function GammaCheckoutDialog({ open, onOpenChange, product }: GammaChecko
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [isPaying, setIsPaying] = useState(false);
+
+  // The order service's automatic invoice, once it lands (kind-16 type 2).
+  const { data: paymentRequest } = useGammaPaymentRequest(step === 'sent' ? orderId : null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!paymentRequest?.invoice) {
+      setQrCodeUrl('');
+      return;
+    }
+    QRCode.toDataURL(paymentRequest.invoice.toUpperCase(), { width: 256, margin: 2 })
+      .then((url) => { if (!cancelled) setQrCodeUrl(url); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [paymentRequest?.invoice]);
 
   const countries = useMemo(() => allCountries(), []);
 
@@ -105,7 +128,12 @@ export function GammaCheckoutDialog({ open, onOpenChange, product }: GammaChecko
     }
     const countryLabel = countries.find((entry) => entry.code === country)?.name ?? country;
     try {
+      const shippingSats = selectedOption
+        ? convertToSats(Number(selectedOption.price.amount), selectedOption.price.currency)
+        : 0;
+      const totalSats = convertToSats(product.price, product.currency) + shippingSats;
       const result = await submitOrder({
+        totalSats: totalSats > 0 ? totalSats : undefined,
         item: {
           productId: product.id,
           productPubkey: product.event.pubkey,
@@ -153,6 +181,9 @@ export function GammaCheckoutDialog({ open, onOpenChange, product }: GammaChecko
       setPhone('');
       setMessage('');
       setShowLoginDialog(false);
+      setQrCodeUrl('');
+      setCopied(false);
+      setIsPaying(false);
     }
     onOpenChange(nextOpen);
   };
@@ -324,7 +355,7 @@ export function GammaCheckoutDialog({ open, onOpenChange, product }: GammaChecko
                 </p>
               </form>
             </>
-          ) : (
+          ) : step === 'sent' ? (
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
@@ -332,27 +363,139 @@ export function GammaCheckoutDialog({ open, onOpenChange, product }: GammaChecko
                   Order sent!
                 </DialogTitle>
               </DialogHeader>
+              <div className="space-y-6 py-6">
+                {paymentRequest ? (
+                  <>
+                    <div className="text-center p-4 bg-amber-50 rounded-lg">
+                      <p className="text-sm text-amber-700 mb-1">Amount to pay</p>
+                      <p className="text-3xl font-bold text-amber-900">
+                        {paymentRequest.amountSats?.toLocaleString() ?? '—'} sats
+                      </p>
+                    </div>
+                    {qrCodeUrl && (
+                      <img
+                        src={qrCodeUrl}
+                        alt="Lightning invoice QR code"
+                        className="mx-auto w-48 h-48 rounded-lg border"
+                      />
+                    )}
+                    <div className="space-y-3">
+                      <Button
+                        className="w-full bg-amber-500 hover:bg-amber-600"
+                        size="lg"
+                        disabled={isPaying}
+                        onClick={async () => {
+                          setIsPaying(true);
+                          const result = await payWithWebLN(paymentRequest.invoice);
+                          setIsPaying(false);
+                          if (result.success) {
+                            setStep('paid');
+                          } else {
+                            toast({
+                              title: 'Payment not completed',
+                              description:
+                                'No browser wallet responded — open the invoice in a wallet app or copy it instead.',
+                              variant: 'destructive',
+                            });
+                          }
+                        }}
+                      >
+                        {isPaying ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Zap className="w-4 h-4 mr-2" />
+                        )}
+                        Pay with Browser Wallet
+                      </Button>
+                      <Button variant="outline" className="w-full" asChild>
+                        <a href={`lightning:${paymentRequest.invoice}`}>
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Open in Wallet App
+                        </a>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(paymentRequest.invoice);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                          } catch {
+                            toast({
+                              title: 'Could not copy',
+                              description: 'Clipboard unavailable — long-press or select the invoice in a wallet app instead.',
+                              variant: 'destructive',
+                            });
+                          }
+                        }}
+                      >
+                        {copied ? (
+                          <Check className="w-4 h-4 mr-2 text-green-500" />
+                        ) : (
+                          <Copy className="w-4 h-4 mr-2" />
+                        )}
+                        Copy invoice
+                      </Button>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      className="w-full text-muted-foreground"
+                      onClick={() => setStep('paid')}
+                    >
+                      I've already paid
+                    </Button>
+                  </>
+                ) : (
+                  <div className="text-center space-y-6">
+                    <div className="w-16 h-16 mx-auto rounded-full bg-green-100 flex items-center justify-center">
+                      <Check className="w-8 h-8 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-semibold">
+                        Order #{orderId?.slice(0, 8).toUpperCase()} is on its way to Eden.
+                      </p>
+                      <p className="text-muted-foreground mt-2">
+                        Waiting for your Lightning invoice — it appears here automatically,
+                        and also lands in Messages.
+                      </p>
+                      <Loader2 className="w-5 h-5 mx-auto mt-3 animate-spin text-amber-500" />
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        handleOpenChange(false);
+                        openMessages();
+                      }}
+                    >
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      Open Messages
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Check className="w-5 h-5 text-green-500" />
+                  Payment complete!
+                </DialogTitle>
+              </DialogHeader>
               <div className="space-y-6 py-6 text-center">
                 <div className="w-16 h-16 mx-auto rounded-full bg-green-100 flex items-center justify-center">
                   <Check className="w-8 h-8 text-green-600" />
                 </div>
-                <div>
-                  <p className="text-lg font-semibold">
-                    Order #{orderId?.slice(0, 8).toUpperCase()} is on its way to Eden.
-                  </p>
-                  <p className="text-muted-foreground mt-2">
-                    She'll reply in Messages with a Lightning invoice to complete your purchase.
-                  </p>
-                </div>
-                <Button
-                  className="w-full"
-                  onClick={() => {
-                    handleOpenChange(false);
-                    openMessages();
-                  }}
-                >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Open Messages
+                <p className="text-lg font-semibold">
+                  Thank you! Order #{orderId?.slice(0, 8).toUpperCase()} is paid.
+                </p>
+                <p className="text-muted-foreground">
+                  Eden will be in touch in Messages with dispatch updates.
+                </p>
+                <Button className="w-full" onClick={() => handleOpenChange(false)}>
+                  Close
                 </Button>
               </div>
             </>

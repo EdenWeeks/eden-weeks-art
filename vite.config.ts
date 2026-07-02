@@ -1,7 +1,7 @@
 import path from "node:path";
 
 import react from "@vitejs/plugin-react-swc";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 
 import pkg from "./package.json";
 
@@ -20,6 +20,9 @@ export default defineConfig(() => ({
     react(),
   ],
   test: {
+    // The order service has its own node:test suite (run in CI's
+    // Order Service Tests job) that Vitest can't run; exclude the subtree.
+    exclude: [...configDefaults.exclude, 'order-service/**'],
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
