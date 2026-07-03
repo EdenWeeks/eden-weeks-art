@@ -18,9 +18,11 @@ interface NavItemProps {
 }
 
 /**
- * A desktop nav entry showing both icon and text label. Routes render as a
- * router <Link>; in-page sections (#about / #shop) render as a plain <a> so the
- * browser's native anchor behaviour scrolls to the section.
+ * A desktop nav entry showing both icon and text label. Route links render as a
+ * router <Link>. Links flagged with `hash` — the in-page section links, whether
+ * `#about` on the home page or `/#about` from another route — always render as a
+ * plain <a> so the browser's native anchor behaviour scrolls to the section;
+ * they intentionally avoid <Link>, which would not scroll to the fragment.
  */
 function NavItem({ to, hash, icon, label, isActive }: NavItemProps) {
   const className = cn(
