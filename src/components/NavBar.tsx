@@ -17,17 +17,19 @@ export function NavBar() {
   const { openMessages } = useMessagesDrawer();
 
   // Track the URL hash so the in-page section links (About/Shop) can reflect an
-  // active state. Native `<a href="#about">` clicks fire `hashchange` rather than
-  // a React Router navigation, so we listen for both hashchange and route changes.
-  const [hash, setHash] = useState(() =>
-    typeof window !== 'undefined' ? window.location.hash : ''
-  );
+  // active state. Initialised from the router location (SSR-safe — no `window`).
+  const [hash, setHash] = useState(location.hash);
+  // Native `<a href="#about">` clicks change the hash without a router navigation,
+  // so register a single `hashchange` listener to keep the active state in sync.
   useEffect(() => {
     const sync = () => setHash(window.location.hash);
-    sync();
     window.addEventListener('hashchange', sync);
     return () => window.removeEventListener('hashchange', sync);
-  }, [location]);
+  }, []);
+  // Router navigations (e.g. /gallery → /#about) update `location.hash` directly.
+  useEffect(() => {
+    setHash(location.hash);
+  }, [location.hash]);
 
   const isAboutActive = isHome && hash === '#about';
   const isShopActive = isHome && hash === '#shop';
@@ -98,7 +100,7 @@ export function NavBar() {
                 href={isHome ? '#about' : '/#about'}
                 title="About"
                 aria-label="About"
-                aria-current={isAboutActive ? 'true' : undefined}
+                aria-current={isAboutActive ? 'location' : undefined}
                 className={cn(
                   'p-2 transition-colors hover:text-primary',
                   isAboutActive ? 'text-primary' : 'text-muted-foreground'
@@ -110,7 +112,7 @@ export function NavBar() {
                 href={isHome ? '#shop' : '/#shop'}
                 title="Shop"
                 aria-label="Shop"
-                aria-current={isShopActive ? 'true' : undefined}
+                aria-current={isShopActive ? 'location' : undefined}
                 className={cn(
                   'p-2 transition-colors hover:text-primary',
                   isShopActive ? 'text-primary' : 'text-muted-foreground'
