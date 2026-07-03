@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet';
@@ -15,6 +15,24 @@ export function NavBar() {
   const isMyStory = location.pathname === '/my-story';
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { openMessages } = useMessagesDrawer();
+
+  // Track the URL hash so the in-page section links (About/Shop) can reflect an
+  // active state. Native `<a href="#about">` clicks fire `hashchange` rather than
+  // a React Router navigation, so we listen for both hashchange and route changes.
+  const [hash, setHash] = useState(() =>
+    typeof window !== 'undefined' ? window.location.hash : ''
+  );
+  useEffect(() => {
+    const sync = () => setHash(window.location.hash);
+    sync();
+    window.addEventListener('hashchange', sync);
+    return () => window.removeEventListener('hashchange', sync);
+  }, [location]);
+
+  const isAboutActive = isHome && hash === '#about';
+  const isShopActive = isHome && hash === '#shop';
+  // Home is only the active item on the home route when no in-page section is targeted.
+  const isHomeActive = isHome && !isAboutActive && !isShopActive;
 
   const handleMobileNavClick = () => {
     setMobileMenuOpen(false);
@@ -44,9 +62,10 @@ export function NavBar() {
                 to="/"
                 title="Home"
                 aria-label="Home"
+                aria-current={isHomeActive ? 'page' : undefined}
                 className={cn(
                   'p-2 transition-colors hover:text-primary',
-                  isHome ? 'text-primary' : 'text-muted-foreground'
+                  isHomeActive ? 'text-primary' : 'text-muted-foreground'
                 )}
               >
                 <Home className="h-5 w-5" />
@@ -77,7 +96,11 @@ export function NavBar() {
                 href={isHome ? '#about' : '/#about'}
                 title="About"
                 aria-label="About"
-                className="p-2 text-muted-foreground transition-colors hover:text-primary"
+                aria-current={isAboutActive ? 'true' : undefined}
+                className={cn(
+                  'p-2 transition-colors hover:text-primary',
+                  isAboutActive ? 'text-primary' : 'text-muted-foreground'
+                )}
               >
                 <User className="h-5 w-5" />
               </a>
@@ -85,7 +108,11 @@ export function NavBar() {
                 href={isHome ? '#shop' : '/#shop'}
                 title="Shop"
                 aria-label="Shop"
-                className="p-2 text-muted-foreground transition-colors hover:text-primary"
+                aria-current={isShopActive ? 'true' : undefined}
+                className={cn(
+                  'p-2 transition-colors hover:text-primary',
+                  isShopActive ? 'text-primary' : 'text-muted-foreground'
+                )}
               >
                 <ShoppingBag className="h-5 w-5" />
               </a>
