@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Copy, ExternalLink, Loader2, MessageCircle, ShoppingBag, Zap } from 'lucide-react';
+import { Check, Copy, ExternalLink, Loader2, Mail, ShoppingBag, Zap } from 'lucide-react';
 
 import {
   Dialog,
@@ -469,7 +469,7 @@ export function GammaCheckoutDialog({ open, onOpenChange, product }: GammaChecko
                         openMessages();
                       }}
                     >
-                      <MessageCircle className="w-4 h-4 mr-2" />
+                      <Mail className="w-4 h-4 mr-2" />
                       Open Messages
                     </Button>
                   </div>
