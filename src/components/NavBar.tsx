@@ -74,6 +74,7 @@ export function NavBar() {
                 to="/gallery"
                 title="Gallery"
                 aria-label="Gallery"
+                aria-current={isGallery ? 'page' : undefined}
                 className={cn(
                   'p-2 transition-colors hover:text-primary',
                   isGallery ? 'text-primary' : 'text-muted-foreground'
@@ -85,6 +86,7 @@ export function NavBar() {
                 to="/my-story"
                 title="My Story"
                 aria-label="My Story"
+                aria-current={isMyStory ? 'page' : undefined}
                 className={cn(
                   'p-2 transition-colors hover:text-primary',
                   isMyStory ? 'text-primary' : 'text-muted-foreground'
