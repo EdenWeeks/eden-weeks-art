@@ -10,41 +10,6 @@ import { ZapDialog } from '@/components/ZapDialog';
 import { MERCHANT_PUBKEY } from '@/lib/merchant';
 import { cn } from '@/lib/utils';
 
-interface NavLinkProps {
-  to: string;
-  children: React.ReactNode;
-  isActive?: boolean;
-}
-
-function NavLink({ to, children, isActive }: NavLinkProps) {
-  const isHashLink = to.startsWith('#') || to.includes('/#');
-
-  if (isHashLink) {
-    return (
-      <a
-        href={to}
-        className={cn(
-          "text-sm font-medium transition-colors",
-          isActive ? "text-primary" : "text-muted-foreground hover:text-primary"
-        )}
-      >
-        {children}
-      </a>
-    );
-  }
-
-  return (
-    <Link
-      to={to}
-      className={cn(
-        "text-sm font-medium transition-colors",
-        isActive ? "text-primary" : "text-muted-foreground hover:text-primary"
-      )}
-    >
-      {children}
-    </Link>
-  );
-}
 
 export function NavBar() {
   const location = useLocation();
@@ -78,29 +43,58 @@ export function NavBar() {
               />
             </Link>
 
-            {/* Desktop Navigation */}
-            <div className="hidden sm:flex items-center gap-6">
-              <NavLink to="/" isActive={isHome}>
-                Home
-              </NavLink>
-              <NavLink to="/gallery" isActive={isGallery}>
-                Gallery
-              </NavLink>
-              <NavLink to="/my-story" isActive={isMyStory}>
-                My Story
-              </NavLink>
-              <NavLink to={isHome ? "#about" : "/#about"}>
-                About
-              </NavLink>
-              <Button size="sm" asChild>
-                <a href={isHome ? "#shop" : "/#shop"}>
-                  <ShoppingBag className="w-4 h-4 mr-2" />
-                  Shop
-                </a>
-              </Button>
-              {/* Icon cluster: zap + messages sit tightly together, matching
-                  the Lightning Piggy header's story/zap/chat grouping. */}
-              <div className="flex items-center gap-1 -ml-2">
+            {/* Desktop Navigation — icon-only, matching robotechy.com */}
+            <div className="hidden sm:flex items-center gap-1">
+              <Link
+                to="/"
+                title="Home"
+                aria-label="Home"
+                className={cn(
+                  'p-2 transition-colors hover:text-primary',
+                  isHome ? 'text-primary' : 'text-muted-foreground'
+                )}
+              >
+                <Home className="h-5 w-5" />
+              </Link>
+              <Link
+                to="/gallery"
+                title="Gallery"
+                aria-label="Gallery"
+                className={cn(
+                  'p-2 transition-colors hover:text-primary',
+                  isGallery ? 'text-primary' : 'text-muted-foreground'
+                )}
+              >
+                <Image className="h-5 w-5" />
+              </Link>
+              <Link
+                to="/my-story"
+                title="My Story"
+                aria-label="My Story"
+                className={cn(
+                  'p-2 transition-colors hover:text-primary',
+                  isMyStory ? 'text-primary' : 'text-muted-foreground'
+                )}
+              >
+                <BookOpen className="h-5 w-5" />
+              </Link>
+              <a
+                href={isHome ? '#about' : '/#about'}
+                title="About"
+                aria-label="About"
+                className="p-2 text-muted-foreground transition-colors hover:text-primary"
+              >
+                <User className="h-5 w-5" />
+              </a>
+              <a
+                href={isHome ? '#shop' : '/#shop'}
+                title="Shop"
+                aria-label="Shop"
+                className="p-2 text-muted-foreground transition-colors hover:text-primary"
+              >
+                <ShoppingBag className="h-5 w-5" />
+              </a>
+              <div className="flex items-center gap-1">
                 {eden?.event && (
                   <ZapDialog target={eden.event}>
                     <Button
