@@ -7,10 +7,13 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Palette, Heart, ShoppingBag } from 'lucide-react';
+import { Palette, Heart, ShoppingBag, Zap } from 'lucide-react';
 import { NavBar } from '@/components/NavBar';
 import { SiteFooter } from '@/components/SiteFooter';
 import { ZapButton } from '@/components/ZapButton';
+import { ZapDialog } from '@/components/ZapDialog';
+import { useAuthor } from '@/hooks/useAuthor';
+import { MERCHANT_PUBKEY } from '@/lib/merchant';
 
 const Index = () => {
   useSeoMeta({
@@ -19,6 +22,8 @@ const Index = () => {
   });
 
   const { data: products, isLoading } = useUnifiedProducts();
+  // Eden's kind-0 profile event — the target for the About section's "Zap Me" button.
+  const { data: eden } = useAuthor(MERCHANT_PUBKEY);
 
   return (
     <div className="min-h-screen bg-white">
@@ -216,6 +221,19 @@ const Index = () => {
                           My Story
                         </Link>
                       </Button>
+                      {eden?.event && (
+                        <ZapDialog target={eden.event}>
+                          <Button
+                            variant="outline"
+                            aria-label="Zap Eden"
+                            title="Enjoying Eden's work? Send her a zap ⚡"
+                            className="border-amber-500 text-amber-600 hover:bg-amber-50 hover:text-amber-700"
+                          >
+                            <Zap className="w-4 h-4 mr-2" />
+                            Zap Me
+                          </Button>
+                        </ZapDialog>
+                      )}
                       <FollowMeButton size="default" showViewOnNostr={false} />
                     </div>
                     </div>
