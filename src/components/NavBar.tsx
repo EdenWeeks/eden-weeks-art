@@ -1,44 +1,48 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { LoginArea } from '@/components/auth/LoginArea';
-import { Menu, ShoppingBag, Home, Image, BookOpen, User, MessageCircle } from 'lucide-react';
+import { Menu, ShoppingBag, Home, Image, BookOpen, User, Mail } from 'lucide-react';
 import { useMessagesDrawer } from '@/hooks/useMessagesDrawer';
 import { cn } from '@/lib/utils';
 
-interface NavLinkProps {
+interface NavItemProps {
+  /** Route path (Link) or hash target (anchor) — see `hash`. */
   to: string;
-  children: React.ReactNode;
+  /** Render as a plain <a> for in-page hash navigation instead of a router <Link>. */
+  hash?: boolean;
+  icon: React.ReactNode;
+  label: string;
   isActive?: boolean;
 }
 
-function NavLink({ to, children, isActive }: NavLinkProps) {
-  const isHashLink = to.startsWith('#') || to.includes('/#');
+/**
+ * A desktop nav entry showing both icon and text label. Route links render as a
+ * router <Link>. Links flagged with `hash` — the in-page section links, whether
+ * `#about` on the home page or `/#about` from another route — always render as a
+ * plain <a> so the browser's native anchor behaviour scrolls to the section;
+ * they intentionally avoid <Link>, which would not scroll to the fragment.
+ */
+function NavItem({ to, hash, icon, label, isActive }: NavItemProps) {
+  const className = cn(
+    'flex items-center gap-1.5 text-sm font-medium transition-colors',
+    isActive ? 'text-primary' : 'text-muted-foreground hover:text-primary'
+  );
 
-  if (isHashLink) {
+  if (hash) {
     return (
-      <a
-        href={to}
-        className={cn(
-          "text-sm font-medium transition-colors",
-          isActive ? "text-primary" : "text-muted-foreground hover:text-primary"
-        )}
-      >
-        {children}
+      <a href={to} aria-current={isActive ? 'location' : undefined} className={className}>
+        {icon}
+        {label}
       </a>
     );
   }
 
   return (
-    <Link
-      to={to}
-      className={cn(
-        "text-sm font-medium transition-colors",
-        isActive ? "text-primary" : "text-muted-foreground hover:text-primary"
-      )}
-    >
-      {children}
+    <Link to={to} aria-current={isActive ? 'page' : undefined} className={className}>
+      {icon}
+      {label}
     </Link>
   );
 }
@@ -50,6 +54,26 @@ export function NavBar() {
   const isMyStory = location.pathname === '/my-story';
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { openMessages } = useMessagesDrawer();
+
+  // Track the URL hash so the in-page section links (About/Shop) can reflect an
+  // active state. Initialised from the router location (SSR-safe — no `window`).
+  const [hash, setHash] = useState(location.hash);
+  // Native `<a href="#about">` clicks change the hash without a router navigation,
+  // so register a single `hashchange` listener to keep the active state in sync.
+  useEffect(() => {
+    const sync = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', sync);
+    return () => window.removeEventListener('hashchange', sync);
+  }, []);
+  // Router navigations (e.g. /gallery → /#about) update `location.hash` directly.
+  useEffect(() => {
+    setHash(location.hash);
+  }, [location.hash]);
+
+  const isAboutActive = isHome && hash === '#about';
+  const isShopActive = isHome && hash === '#shop';
+  // Home is only the active item on the home route when no in-page section is targeted.
+  const isHomeActive = isHome && !isAboutActive && !isShopActive;
 
   const handleMobileNavClick = () => {
     setMobileMenuOpen(false);
@@ -64,43 +88,36 @@ export function NavBar() {
     <>
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-3 group">
-              <img
-                src="/logo.jpg"
-                alt="Eden Weeks"
-                className="h-14 w-auto transition-transform group-hover:scale-105"
-              />
-            </Link>
+          <div className="flex items-center justify-between gap-4">
+            {/* Left: logo + primary nav (icon + text), left-aligned */}
+            <div className="flex items-center gap-4 lg:gap-8">
+              <Link to="/" className="flex items-center gap-3 group">
+                <img
+                  src="/logo.jpg"
+                  alt="Eden Weeks"
+                  className="h-14 w-auto transition-transform group-hover:scale-105"
+                />
+              </Link>
 
-            {/* Desktop Navigation */}
-            <div className="hidden sm:flex items-center gap-6">
-              <NavLink to="/" isActive={isHome}>
-                Home
-              </NavLink>
-              <NavLink to="/gallery" isActive={isGallery}>
-                Gallery
-              </NavLink>
-              <NavLink to="/my-story" isActive={isMyStory}>
-                My Story
-              </NavLink>
-              <NavLink to={isHome ? "#about" : "/#about"}>
-                About
-              </NavLink>
-              <Button size="sm" asChild>
-                <a href={isHome ? "#shop" : "/#shop"}>
-                  <ShoppingBag className="w-4 h-4 mr-2" />
-                  Shop
-                </a>
-              </Button>
+              <div className="hidden sm:flex items-center gap-4 lg:gap-6">
+                <NavItem to="/" icon={<Home className="h-4 w-4" />} label="Home" isActive={isHomeActive} />
+                <NavItem to="/gallery" icon={<Image className="h-4 w-4" />} label="Gallery" isActive={isGallery} />
+                <NavItem to="/my-story" icon={<BookOpen className="h-4 w-4" />} label="My Story" isActive={isMyStory} />
+                <NavItem to={isHome ? '#about' : '/#about'} hash icon={<User className="h-4 w-4" />} label="About" isActive={isAboutActive} />
+                <NavItem to={isHome ? '#shop' : '/#shop'} hash icon={<ShoppingBag className="h-4 w-4" />} label="Shop" isActive={isShopActive} />
+              </div>
+            </div>
+
+            {/* Right: Contact (icon-only) + account, right-aligned */}
+            <div className="hidden sm:flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={openMessages}
-                aria-label="Messages"
-                className="-ml-2"
+                aria-label="Contact"
+                title="Contact"
               >
-                <MessageCircle className="h-5 w-5" />
+                <Mail className="h-5 w-5" />
               </Button>
               <LoginArea />
             </div>
@@ -162,13 +179,6 @@ export function NavBar() {
                       <User className="w-5 h-5" />
                       About
                     </a>
-                    <button
-                      onClick={handleMobileMessagesClick}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-muted text-left"
-                    >
-                      <MessageCircle className="w-5 h-5" />
-                      Messages
-                    </button>
                     <a
                       href={isHome ? "#shop" : "/#shop"}
                       onClick={handleMobileNavClick}
@@ -177,6 +187,13 @@ export function NavBar() {
                       <ShoppingBag className="w-5 h-5" />
                       Shop
                     </a>
+                    <button
+                      onClick={handleMobileMessagesClick}
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-muted text-left"
+                    >
+                      <Mail className="w-5 h-5" />
+                      Contact
+                    </button>
                   </nav>
                 </SheetContent>
               </Sheet>
