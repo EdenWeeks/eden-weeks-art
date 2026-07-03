@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, MessageCircle, LogIn } from 'lucide-react';
+import { Mail, LogIn } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -43,7 +43,7 @@ export function MessagesDrawer() {
       <SheetContent side="right" className="flex flex-col p-0 w-full sm:max-w-md">
         <SheetHeader className="p-4 border-b">
           <SheetTitle className="flex items-center gap-2">
-            <MessageCircle className="h-5 w-5" />
+            <Mail className="h-5 w-5" />
             Messages
           </SheetTitle>
           <SheetDescription className="sr-only">

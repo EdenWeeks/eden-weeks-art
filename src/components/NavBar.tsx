@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { LoginArea } from '@/components/auth/LoginArea';
-import { Menu, ShoppingBag, Home, Image, BookOpen, User, MessageCircle, Zap } from 'lucide-react';
+import { Menu, ShoppingBag, Home, Image, BookOpen, User, Mail, Zap } from 'lucide-react';
 import { useMessagesDrawer } from '@/hooks/useMessagesDrawer';
 import { useAuthor } from '@/hooks/useAuthor';
 import { ZapDialog } from '@/components/ZapDialog';
@@ -114,7 +114,7 @@ export function NavBar() {
                   onClick={openMessages}
                   aria-label="Messages"
                 >
-                  <MessageCircle className="h-5 w-5" />
+                  <Mail className="h-5 w-5" />
                 </Button>
               </div>
               <LoginArea />
@@ -191,7 +191,7 @@ export function NavBar() {
                       onClick={handleMobileMessagesClick}
                       className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-muted text-left"
                     >
-                      <MessageCircle className="w-5 h-5" />
+                      <Mail className="w-5 h-5" />
                       Messages
                     </button>
                     <a
