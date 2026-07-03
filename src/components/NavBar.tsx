@@ -3,11 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { LoginArea } from '@/components/auth/LoginArea';
-import { Menu, ShoppingBag, Home, Image, BookOpen, User, MessageCircle, Zap } from 'lucide-react';
+import { Menu, ShoppingBag, Home, Image, BookOpen, User, MessageCircle } from 'lucide-react';
 import { useMessagesDrawer } from '@/hooks/useMessagesDrawer';
-import { useAuthor } from '@/hooks/useAuthor';
-import { ZapDialog } from '@/components/ZapDialog';
-import { MERCHANT_PUBKEY } from '@/lib/merchant';
 import { cn } from '@/lib/utils';
 
 interface NavLinkProps {
@@ -53,8 +50,6 @@ export function NavBar() {
   const isMyStory = location.pathname === '/my-story';
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { openMessages } = useMessagesDrawer();
-  // Eden's kind-0 profile event — the target for header profile zaps.
-  const { data: eden } = useAuthor(MERCHANT_PUBKEY);
 
   const handleMobileNavClick = () => {
     setMobileMenuOpen(false);
@@ -98,31 +93,15 @@ export function NavBar() {
                   Shop
                 </a>
               </Button>
-              {/* Icon cluster: zap + messages sit tightly together, matching
-                  the Lightning Piggy header's story/zap/chat grouping. */}
-              <div className="flex items-center gap-1 -ml-2">
-                {eden?.event && (
-                  <ZapDialog target={eden.event}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="Zap Eden"
-                      title="Enjoying Eden's work? Send her a zap ⚡"
-                      className="text-amber-500 hover:text-amber-600"
-                    >
-                      <Zap className="h-5 w-5" />
-                    </Button>
-                  </ZapDialog>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={openMessages}
-                  aria-label="Messages"
-                >
-                  <MessageCircle className="h-5 w-5" />
-                </Button>
-              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={openMessages}
+                aria-label="Messages"
+                className="-ml-2"
+              >
+                <MessageCircle className="h-5 w-5" />
+              </Button>
               <LoginArea />
             </div>
 
@@ -183,16 +162,6 @@ export function NavBar() {
                       <User className="w-5 h-5" />
                       About
                     </a>
-                    {eden?.event && (
-                      <ZapDialog target={eden.event}>
-                        <button
-                          className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-muted text-left text-amber-600"
-                        >
-                          <Zap className="w-5 h-5" />
-                          Zap Eden
-                        </button>
-                      </ZapDialog>
-                    )}
                     <button
                       onClick={handleMobileMessagesClick}
                       className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-muted text-left"
