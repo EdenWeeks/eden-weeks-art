@@ -7,8 +7,10 @@ import { createRoot } from 'react-dom/client';
 // empty. Bounce production traffic to https before the app boots.
 // (localhost and LAN IPs stay untouched for development.)
 if (
+  import.meta.env.PROD &&
   window.location.protocol === 'http:' &&
-  window.location.hostname.endsWith('edenweeks.art')
+  (window.location.hostname === 'edenweeks.art' ||
+    window.location.hostname.endsWith('.edenweeks.art'))
 ) {
   window.location.replace(window.location.href.replace(/^http:/, 'https:'));
 }
