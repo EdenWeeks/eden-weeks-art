@@ -3,9 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { LoginArea } from '@/components/auth/LoginArea';
-import { ContactDialog } from '@/components/ContactDialog';
-import LoginDialog from '@/components/auth/LoginDialog';
-import { Menu, ShoppingBag, Home, Image, BookOpen, User, Mail, MessageCircle, Zap } from 'lucide-react';
+import { Menu, ShoppingBag, Home, Image, BookOpen, User, MessageCircle, Zap } from 'lucide-react';
 import { useMessagesDrawer } from '@/hooks/useMessagesDrawer';
 import { useAuthor } from '@/hooks/useAuthor';
 import { ZapDialog } from '@/components/ZapDialog';
@@ -53,8 +51,6 @@ export function NavBar() {
   const isHome = location.pathname === '/';
   const isGallery = location.pathname === '/gallery';
   const isMyStory = location.pathname === '/my-story';
-  const [contactOpen, setContactOpen] = useState(false);
-  const [loginOpen, setLoginOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { openMessages } = useMessagesDrawer();
   // Eden's kind-0 profile event — the target for header profile zaps.
@@ -62,11 +58,6 @@ export function NavBar() {
 
   const handleMobileNavClick = () => {
     setMobileMenuOpen(false);
-  };
-
-  const handleMobileContactClick = () => {
-    setMobileMenuOpen(false);
-    setContactOpen(true);
   };
 
   const handleMobileMessagesClick = () => {
@@ -101,12 +92,6 @@ export function NavBar() {
               <NavLink to={isHome ? "#about" : "/#about"}>
                 About
               </NavLink>
-              <button
-                onClick={() => setContactOpen(true)}
-                className="text-sm font-medium transition-colors text-muted-foreground hover:text-primary"
-              >
-                Contact
-              </button>
               <Button size="sm" asChild>
                 <a href={isHome ? "#shop" : "/#shop"}>
                   <ShoppingBag className="w-4 h-4 mr-2" />
@@ -198,13 +183,6 @@ export function NavBar() {
                       <User className="w-5 h-5" />
                       About
                     </a>
-                    <button
-                      onClick={handleMobileContactClick}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-muted text-left"
-                    >
-                      <Mail className="w-5 h-5" />
-                      Contact
-                    </button>
                     {eden?.event && (
                       <ZapDialog target={eden.event}>
                         <button
@@ -238,21 +216,6 @@ export function NavBar() {
         </div>
       </nav>
 
-      <ContactDialog
-        open={contactOpen}
-        onOpenChange={setContactOpen}
-        onLoginClick={() => setLoginOpen(true)}
-      />
-
-      <LoginDialog
-        isOpen={loginOpen}
-        onClose={() => setLoginOpen(false)}
-        onLogin={() => {
-          setLoginOpen(false);
-          setContactOpen(true);
-        }}
-        onSignup={() => {}}
-      />
     </>
   );
 }
