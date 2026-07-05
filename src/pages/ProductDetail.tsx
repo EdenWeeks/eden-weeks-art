@@ -1,13 +1,14 @@
 import { useSeoMeta } from '@unhead/react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useUnifiedProduct } from '@/hooks/useUnifiedProducts';
 import { useStall } from '@/hooks/useStall';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Expand, ShoppingBag } from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { NavBar } from '@/components/NavBar';
 import { SiteFooter } from '@/components/SiteFooter';
 import { ProductFeedbackTabs } from '@/components/ProductFeedbackTabs';
@@ -27,11 +28,33 @@ const ProductDetail = () => {
   const { data: stall } = useStall(EDEN_PUBKEY, STALL_ID);
   const [selectedImage, setSelectedImage] = useState(0);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   useSeoMeta({
     title: product ? `${product.name} - Eden Weeks Art` : 'Product - Eden Weeks Art',
     description: product?.description || 'View this beautiful artwork by Eden Weeks',
   });
+
+  // The main image container adopts the FIRST image's natural aspect ratio
+  // (previously a fixed square that cropped non-square artwork). Preload image 1
+  // to read its natural dimensions; until known (or on failure) it stays square.
+  const firstImageUrl = product?.images?.[0];
+  const [firstImageRatio, setFirstImageRatio] = useState<number | null>(null);
+  useEffect(() => {
+    setFirstImageRatio(null);
+    if (!firstImageUrl) return;
+    let cancelled = false;
+    const probe = new Image();
+    probe.onload = () => {
+      if (!cancelled && probe.naturalWidth > 0 && probe.naturalHeight > 0) {
+        setFirstImageRatio(probe.naturalWidth / probe.naturalHeight);
+      }
+    };
+    probe.src = firstImageUrl;
+    return () => {
+      cancelled = true;
+    };
+  }, [firstImageUrl]);
 
   if (isLoading) {
     return (
@@ -105,12 +128,28 @@ const ProductDetail = () => {
           <div className="space-y-4">
             {images.length > 0 ? (
               <>
-                <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted shadow-xl">
+                <div
+                  className="relative rounded-2xl overflow-hidden bg-muted shadow-xl"
+                  style={{ aspectRatio: firstImageRatio ?? 1 }}
+                >
+                  {/* object-contain (not cover): the container adopts the first
+                      image's natural aspect ratio, so image 1 fills it exactly
+                      and differently-shaped artwork letterboxes instead of being
+                      cropped. */}
                   <img
                     src={images[selectedImage]}
                     alt={product.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setLightboxOpen(true)}
+                    aria-label="Expand image"
+                    title="Expand image"
+                    className="absolute top-3 right-3 rounded-md bg-black/50 p-2 text-white transition-colors hover:bg-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+                  >
+                    <Expand className="h-4 w-4" />
+                  </button>
                   {!isAvailable && (
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                       <Badge variant="secondary" className="text-xl px-6 py-3">
@@ -264,6 +303,20 @@ const ProductDetail = () => {
       {product.protocol === 'gamma' && (
         <GammaCheckoutDialog open={checkoutOpen} onOpenChange={setCheckoutOpen} product={product} />
       )}
+
+      {/* Full-size image lightbox (opened by the main image's Expand button) */}
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] border-none bg-black/90 p-2">
+          <DialogTitle className="sr-only">{product.name} — full size image</DialogTitle>
+          {images.length > 0 && (
+            <img
+              src={images[selectedImage]}
+              alt={`${product.name} - full size`}
+              className="mx-auto max-h-[85vh] w-auto max-w-full object-contain"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
