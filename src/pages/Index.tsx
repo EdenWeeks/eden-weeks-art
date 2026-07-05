@@ -11,6 +11,7 @@ import { Palette, Heart, ShoppingBag, Zap } from 'lucide-react';
 import { NavBar } from '@/components/NavBar';
 import { SiteFooter } from '@/components/SiteFooter';
 import { ZapButton } from '@/components/ZapButton';
+import { OwnerToolbar } from '@/components/admin/OwnerToolbar';
 import { ZapDialog } from '@/components/ZapDialog';
 import { useAuthor } from '@/hooks/useAuthor';
 import { MERCHANT_PUBKEY } from '@/lib/merchant';
@@ -248,6 +249,7 @@ const Index = () => {
       {/* Products Section */}
       <section id="shop" className="py-24 bg-gradient-to-b from-white to-indigo-50/30">
         <div className="container mx-auto px-4">
+          <OwnerToolbar />
           <div className="text-center mb-16">
             <h2 className="font-serif text-4xl sm:text-5xl font-bold text-foreground mb-4">
               Available Artwork
