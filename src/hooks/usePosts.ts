@@ -1,5 +1,4 @@
-import { useNostr } from '@nostrify/react';
-import { useQuery } from '@tanstack/react-query';
+import { useShopQuery } from '@/hooks/useShopQuery';
 
 // Media detection patterns
 const IMAGE_EXTENSIONS = /\.(jpg|jpeg|png|gif|webp|svg|avif)(\?.*)?$/i;
@@ -23,8 +22,6 @@ interface PostsOptions {
  * @param options - Filter options (excludeReplies, mediaOnly)
  */
 export function usePosts(pubkey: string, limit = 50, options: PostsOptions | boolean = {}) {
-  const { nostr } = useNostr();
-
   // Support legacy boolean parameter for backwards compatibility
   const opts: PostsOptions = typeof options === 'boolean'
     ? { excludeReplies: options }
@@ -32,31 +29,19 @@ export function usePosts(pubkey: string, limit = 50, options: PostsOptions | boo
 
   const { excludeReplies = false, mediaOnly = false } = opts;
 
-  return useQuery({
+  // Fetch more if we're filtering
+  const fetchMultiplier = (excludeReplies ? 3 : 1) * (mediaOnly ? 5 : 1);
+
+  return useShopQuery({
     queryKey: ['posts', pubkey, limit, excludeReplies, mediaOnly],
-    queryFn: async (c) => {
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(5000)]);
-
-      // Fetch more if we're filtering
-      const fetchMultiplier = (excludeReplies ? 3 : 1) * (mediaOnly ? 5 : 1);
-
-      const events = await nostr.query(
-        [{
-          kinds: [1],
-          authors: [pubkey],
-          limit: limit * fetchMultiplier,
-        }],
-        { signal }
-      );
-
+    filters: [{ kinds: [1], authors: [pubkey], limit: limit * fetchMultiplier }],
+    timeoutMs: 5000,
+    derive: (events) => {
       let filtered = events;
 
       // Filter out replies (posts that have 'e' tags referencing other events)
       if (excludeReplies) {
-        filtered = filtered.filter(event => {
-          const hasReplyTag = event.tags.some(tag => tag[0] === 'e');
-          return !hasReplyTag;
-        });
+        filtered = filtered.filter(event => !event.tags.some(tag => tag[0] === 'e'));
       }
 
       // Filter to only posts with media (images or videos)
@@ -65,7 +50,7 @@ export function usePosts(pubkey: string, limit = 50, options: PostsOptions | boo
       }
 
       // Sort by created_at descending (newest first) and limit
-      return filtered
+      return [...filtered]
         .sort((a, b) => b.created_at - a.created_at)
         .slice(0, limit);
     },
