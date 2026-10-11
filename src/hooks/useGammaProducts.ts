@@ -1,6 +1,6 @@
-import { useNostr } from '@nostrify/react';
-import { useQuery } from '@tanstack/react-query';
 import type { NostrEvent } from '@nostrify/nostrify';
+
+import { useShopQuery } from '@/hooks/useShopQuery';
 
 import { MERCHANT_PUBKEY } from '@/lib/merchant';
 import { PRODUCT_KIND, COLLECTION_KIND } from '@/lib/productAdmin';
@@ -34,35 +34,22 @@ export function dedupeByDTag(events: NostrEvent[]): NostrEvent[] {
  * applies the visibility filter.
  */
 export function useGammaProducts(limit = 100) {
-  const { nostr } = useNostr();
-
-  return useQuery({
+  return useShopQuery({
     queryKey: ['products', 'gamma', MERCHANT_PUBKEY, limit],
-    queryFn: async (c) => {
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(3000)]);
-      const events = await nostr.query(
-        [{ kinds: [PRODUCT_KIND], authors: [MERCHANT_PUBKEY], limit }],
-        { signal }
-      );
-      return dedupeByDTag(events.filter(validateGammaProduct)).sort(
+    filters: [{ kinds: [PRODUCT_KIND], authors: [MERCHANT_PUBKEY], limit }],
+    derive: (events) =>
+      dedupeByDTag(events.filter(validateGammaProduct)).sort(
         (a, b) => b.created_at - a.created_at
-      );
-    },
+      ),
   });
 }
 
 /** Eden's collections (kind 30405) — the storefront's category taxonomy. */
 export function useCollections() {
-  const { nostr } = useNostr();
-
-  return useQuery({
+  return useShopQuery({
     queryKey: ['collections', MERCHANT_PUBKEY],
-    queryFn: async (c) => {
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(3000)]);
-      const events = await nostr.query(
-        [{ kinds: [COLLECTION_KIND], authors: [MERCHANT_PUBKEY] }],
-        { signal }
-      );
+    filters: [{ kinds: [COLLECTION_KIND], authors: [MERCHANT_PUBKEY] }],
+    derive: (events) => {
       const valid = events.filter((event) => {
         const d = event.tags.find(([name]) => name === 'd')?.[1];
         const title = event.tags.find(([name]) => name === 'title')?.[1];

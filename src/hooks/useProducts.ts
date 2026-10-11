@@ -1,6 +1,6 @@
-import { useNostr } from '@nostrify/react';
-import { useQuery } from '@tanstack/react-query';
 import type { NostrEvent } from '@nostrify/nostrify';
+
+import { useShopQuery } from '@/hooks/useShopQuery';
 
 export interface ProductShipping {
   id: string;
@@ -25,52 +25,39 @@ export interface Product {
   data: ProductData;
 }
 
+/** Parse + validate a NIP-15 product event; null if it isn't a usable product. */
+function parseProduct(event: NostrEvent): Product | null {
+  try {
+    const data: ProductData = JSON.parse(event.content);
+
+    // Validate required fields
+    if (!data.id || !data.stall_id || !data.name || !data.currency || data.price === undefined) {
+      console.error('Invalid product data:', data);
+      return null;
+    }
+
+    return { event, data };
+  } catch (error) {
+    console.error('Failed to parse product data:', error);
+    return null;
+  }
+}
+
 /**
  * Hook to fetch products from a specific stall
  * @param merchantPubkey - The merchant's public key
  * @param stallId - Optional stall ID to filter products
  */
 export function useProducts(merchantPubkey: string, stallId?: string) {
-  const { nostr } = useNostr();
-
-  return useQuery({
+  return useShopQuery({
     queryKey: ['products', merchantPubkey, stallId],
-    queryFn: async (c) => {
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(3000)]);
-      
-      const events = await nostr.query(
-        [{
-          kinds: [30018],
-          authors: [merchantPubkey],
-        }],
-        { signal }
-      );
-
-      const products: Product[] = [];
-
-      for (const event of events) {
-        try {
-          const data: ProductData = JSON.parse(event.content);
-          
-          // Validate required fields
-          if (!data.id || !data.stall_id || !data.name || !data.currency || data.price === undefined) {
-            console.error('Invalid product data:', data);
-            continue;
-          }
-
-          // Filter by stall_id if provided
-          if (stallId && data.stall_id !== stallId) {
-            continue;
-          }
-
-          products.push({ event, data });
-        } catch (error) {
-          console.error('Failed to parse product data:', error);
-        }
-      }
-
-      return products;
-    },
+    filters: [{ kinds: [30018], authors: [merchantPubkey] }],
+    derive: (events) =>
+      events
+        .map(parseProduct)
+        .filter((product): product is Product => product !== null)
+        // Filter by stall_id if provided
+        .filter((product) => !stallId || product.data.stall_id === stallId),
     enabled: !!merchantPubkey,
   });
 }
@@ -81,46 +68,12 @@ export function useProducts(merchantPubkey: string, stallId?: string) {
  * @param productId - The product ID (d tag value)
  */
 export function useProduct(merchantPubkey: string, productId: string) {
-  const { nostr } = useNostr();
-
-  return useQuery({
+  return useShopQuery({
     queryKey: ['product', merchantPubkey, productId],
-    queryFn: async (c) => {
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(3000)]);
-      
-      const events = await nostr.query(
-        [{
-          kinds: [30018],
-          authors: [merchantPubkey],
-          '#d': [productId],
-          limit: 1,
-        }],
-        { signal }
-      );
-
-      if (events.length === 0) {
-        return null;
-      }
-
-      const event = events[0];
-      
-      try {
-        const data: ProductData = JSON.parse(event.content);
-
-        // Validate required fields
-        if (!data.id || !data.stall_id || !data.name || !data.currency || data.price === undefined) {
-          console.error('Invalid product data:', data);
-          return null;
-        }
-
-        return {
-          event,
-          data,
-        } as Product;
-      } catch (error) {
-        console.error('Failed to parse product data:', error);
-        return null;
-      }
+    filters: [{ kinds: [30018], authors: [merchantPubkey], '#d': [productId], limit: 1 }],
+    derive: (events) => {
+      const newest = [...events].sort((a, b) => b.created_at - a.created_at)[0];
+      return newest ? parseProduct(newest) : null;
     },
     enabled: !!merchantPubkey && !!productId,
   });

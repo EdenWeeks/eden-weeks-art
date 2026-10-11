@@ -1,6 +1,6 @@
-import { useNostr } from '@nostrify/react';
-import { useQuery } from '@tanstack/react-query';
 import type { NostrEvent } from '@nostrify/nostrify';
+
+import { useShopQuery } from '@/hooks/useShopQuery';
 
 import { MERCHANT_PUBKEY, STALL_ID } from '@/lib/merchant';
 import { PRODUCT_KIND } from '@/lib/productAdmin';
@@ -106,18 +106,12 @@ export function mergeProducts(
  * `includeHidden` is for the owner's admin views.
  */
 export function useUnifiedProducts(options?: { includeHidden?: boolean }) {
-  const { nostr } = useNostr();
   const includeHidden = options?.includeHidden ?? false;
 
-  return useQuery({
+  return useShopQuery({
     queryKey: ['products', 'unified', MERCHANT_PUBKEY, includeHidden],
-    queryFn: async (c) => {
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(3000)]);
-      const events = await nostr.query(
-        [{ kinds: [NIP15_PRODUCT_KIND, PRODUCT_KIND], authors: [MERCHANT_PUBKEY] }],
-        { signal }
-      );
-
+    filters: [{ kinds: [NIP15_PRODUCT_KIND, PRODUCT_KIND], authors: [MERCHANT_PUBKEY] }],
+    derive: (events) => {
       const nip15 = events
         .filter((event) => event.kind === NIP15_PRODUCT_KIND)
         .map(fromNip15)
@@ -137,17 +131,10 @@ export function useUnifiedProducts(options?: { includeHidden?: boolean }) {
 
 /** A single product by identifier, preferring the Gamma version if migrated. */
 export function useUnifiedProduct(id: string) {
-  const { nostr } = useNostr();
-
-  return useQuery({
+  return useShopQuery({
     queryKey: ['product', 'unified', MERCHANT_PUBKEY, id],
-    queryFn: async (c) => {
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(3000)]);
-      const events = await nostr.query(
-        [{ kinds: [NIP15_PRODUCT_KIND, PRODUCT_KIND], authors: [MERCHANT_PUBKEY], '#d': [id] }],
-        { signal }
-      );
-
+    filters: [{ kinds: [NIP15_PRODUCT_KIND, PRODUCT_KIND], authors: [MERCHANT_PUBKEY], '#d': [id] }],
+    derive: (events) => {
       const gammaEvents = dedupeByDTag(
         events.filter((event) => event.kind === PRODUCT_KIND).filter(validateGammaProduct)
       );

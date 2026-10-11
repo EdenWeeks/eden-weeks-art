@@ -22,6 +22,10 @@ RUN npm install -g serve@14.2.6
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/order-service ./order-service
 
+# Event archive / backups (mount a named volume here — see README "Backups &
+# restore"). The archiver also publishes dist/catalog-snapshot.json.
+RUN mkdir -p /data/backups
+
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
