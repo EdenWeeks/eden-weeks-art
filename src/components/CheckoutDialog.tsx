@@ -17,8 +17,11 @@ import { type ShippingAddress } from '@/types/order';
 import { useToast } from '@/hooks/useToast';
 import { usePaymentRequest } from '@/hooks/usePaymentRequest';
 import { payWithWebLN, decodeBolt11Amount } from '@/lib/lightning';
-import { ShoppingBag, Loader2, Zap, Copy, Check, ExternalLink, Wallet } from 'lucide-react';
+import { ShoppingBag, Loader2, Zap, Copy, Check, ExternalLink, Wallet, Clock, RefreshCw } from 'lucide-react';
 import QRCode from 'qrcode';
+
+/** How long to wait for the merchant's invoice before offering a retry. */
+const INVOICE_WAIT_TIMEOUT_MS = 75_000;
 
 interface StallShippingZone {
   id: string;
@@ -221,6 +224,29 @@ export function CheckoutDialog({
     onOpenChange(open);
   }, [onOpenChange, resetForm]);
 
+  // Wait for the merchant's NIP-15 payment request (type 1). On timeout the
+  // payment step shows a friendly "taking longer than usual" message with a
+  // retry, instead of spinning forever.
+  const awaitInvoice = async (id: string) => {
+    setIsLoadingPayment(true);
+    try {
+      const paymentRequest = await waitForPaymentRequest(merchantPubkey, id, INVOICE_WAIT_TIMEOUT_MS);
+
+      // Decode the invoice to get amount
+      const sats = decodeBolt11Amount(paymentRequest.invoice);
+      if (sats) {
+        setAmountSats(sats);
+      }
+
+      setInvoice(paymentRequest.invoice);
+      setOrderMessage(paymentRequest.message || null);
+    } catch (paymentError) {
+      console.error('Payment setup error:', paymentError);
+    } finally {
+      setIsLoadingPayment(false);
+    }
+  };
+
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -262,33 +288,7 @@ export function CheckoutDialog({
       // Move to payment step and wait for merchant's invoice
       setIsLoadingPayment(true);
       setStep('payment');
-
-      try {
-        // Wait for NIP-15 payment request (type 1) from merchant
-        const paymentRequest = await waitForPaymentRequest(
-          merchantPubkey,
-          result.orderId,
-          30000 // 30 second timeout
-        );
-
-        // Decode the invoice to get amount
-        const sats = decodeBolt11Amount(paymentRequest.invoice);
-        if (sats) {
-          setAmountSats(sats);
-        }
-
-        setInvoice(paymentRequest.invoice);
-        setOrderMessage(paymentRequest.message || null);
-        setIsLoadingPayment(false);
-      } catch (paymentError) {
-        console.error('Payment setup error:', paymentError);
-        setIsLoadingPayment(false);
-        toast({
-          title: 'Waiting for invoice',
-          description: 'The merchant is preparing your invoice. Please check back shortly or contact Eden directly.',
-          variant: 'destructive',
-        });
-      }
+      await awaitInvoice(result.orderId);
     } catch (error) {
       console.error('Checkout error:', error);
       setIsLoadingPayment(false);
@@ -761,15 +761,31 @@ export function CheckoutDialog({
                     </Button>
                   </>
                 ) : (
-                  <div className="py-12 text-center">
-                    <p className="text-destructive">Failed to load payment</p>
-                    <Button
-                      variant="outline"
-                      className="mt-4"
-                      onClick={() => setStep('details')}
-                    >
-                      Go Back
-                    </Button>
+                  <div className="py-12 text-center space-y-4">
+                    <Clock className="w-8 h-8 mx-auto text-amber-500" />
+                    <div>
+                      <p className="font-medium">Your invoice is taking longer than usual</p>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Lightning payments may be temporarily unavailable. Your order has been sent to Eden — please try again a little later, or check Messages for your invoice.
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => orderId && awaitInvoice(orderId)}
+                        disabled={!orderId}
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Check again
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="text-muted-foreground"
+                        onClick={() => setStep('details')}
+                      >
+                        Go Back
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
