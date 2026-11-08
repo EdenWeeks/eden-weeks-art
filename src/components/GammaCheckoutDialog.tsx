@@ -1,5 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Check, Copy, ExternalLink, Loader2, MessageCircle, ShoppingBag, Zap } from 'lucide-react';
+import {
+  Check,
+  Clock,
+  Copy,
+  ExternalLink,
+  Info,
+  Loader2,
+  MessageCircle,
+  RefreshCw,
+  ShoppingBag,
+  Zap,
+} from 'lucide-react';
 
 import {
   Dialog,
@@ -8,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,11 +40,15 @@ import { useMerchantShippingOptions } from '@/hooks/useMerchantShippingOptions';
 import { useMessagesDrawer } from '@/hooks/useMessagesDrawer';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
 import { useGammaPaymentRequest } from '@/hooks/useGammaPaymentRequest';
+import { usePaymentsStatus } from '@/hooks/usePaymentsStatus';
 import { payWithWebLN } from '@/lib/lightning';
 import QRCode from 'qrcode';
 import { parseShippingOptionEvent, type ShippingOptionData } from '@/lib/productUtils';
 import { allCountries, detectLocaleCountry } from '@/lib/countries';
 import type { UnifiedProduct } from '@/hooks/useUnifiedProducts';
+
+/** How long "Waiting for your Lightning invoice" spins before saying it's slow. */
+const INVOICE_WAIT_TIMEOUT_MS = 75_000;
 
 interface GammaCheckoutDialogProps {
   open: boolean;
@@ -73,6 +89,21 @@ export function GammaCheckoutDialog({ open, onOpenChange, product }: GammaChecko
 
   // The order service's automatic invoice, once it lands (kind-16 type 2).
   const { data: paymentRequest } = useGammaPaymentRequest(step === 'sent' ? orderId : null);
+  // Only an explicit "unavailable" blocks ordering; "unknown" never does.
+  const paymentsUnavailable = usePaymentsStatus(open && step === 'details') === 'unavailable';
+
+  // Stop spinning forever if the invoice doesn't arrive (e.g. the order service
+  // is holding the order while Lightning is down). A late invoice still shows:
+  // the invoice view replaces this as soon as it is received.
+  const [waitTimedOut, setWaitTimedOut] = useState(false);
+  const [waitAttempt, setWaitAttempt] = useState(0);
+  const awaitingInvoice = step === 'sent' && !paymentRequest;
+  useEffect(() => {
+    if (!awaitingInvoice) return;
+    setWaitTimedOut(false);
+    const timer = setTimeout(() => setWaitTimedOut(true), INVOICE_WAIT_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [awaitingInvoice, waitAttempt]);
 
   useEffect(() => {
     let cancelled = false;
@@ -122,6 +153,7 @@ export function GammaCheckoutDialog({ open, onOpenChange, product }: GammaChecko
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (paymentsUnavailable) return; // guarded by the disabled button too
     if (!user) {
       setShowLoginDialog(true);
       return;
@@ -333,7 +365,22 @@ export function GammaCheckoutDialog({ open, onOpenChange, product }: GammaChecko
                   </>
                 )}
 
-                <Button type="submit" className="w-full" size="lg" disabled={!isValid || isPending}>
+                {paymentsUnavailable && (
+                  <Alert>
+                    <Info className="h-4 w-4 text-amber-500" />
+                    <AlertDescription>
+                      Lightning payments are temporarily unavailable. Please try again a little
+                      later.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  size="lg"
+                  disabled={!isValid || isPending || paymentsUnavailable}
+                >
                   {isPending ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -455,12 +502,35 @@ export function GammaCheckoutDialog({ open, onOpenChange, product }: GammaChecko
                       <p className="text-lg font-semibold">
                         Order #{orderId?.slice(0, 8).toUpperCase()} is on its way to Eden.
                       </p>
-                      <p className="text-muted-foreground mt-2">
-                        Waiting for your Lightning invoice — it appears here automatically,
-                        and also lands in Messages.
-                      </p>
-                      <Loader2 className="w-5 h-5 mx-auto mt-3 animate-spin text-amber-500" />
+                      {waitTimedOut ? (
+                        <>
+                          <p className="text-muted-foreground mt-2">
+                            Your invoice is taking longer than usual. Lightning payments may be
+                            temporarily unavailable — it will appear here and in Messages once
+                            they're back. Please try again a little later.
+                          </p>
+                          <Clock className="w-5 h-5 mx-auto mt-3 text-amber-500" />
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-muted-foreground mt-2">
+                            Waiting for your Lightning invoice — it appears here automatically,
+                            and also lands in Messages.
+                          </p>
+                          <Loader2 className="w-5 h-5 mx-auto mt-3 animate-spin text-amber-500" />
+                        </>
+                      )}
                     </div>
+                    {waitTimedOut && (
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => setWaitAttempt((n) => n + 1)}
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Keep waiting
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       className="w-full"

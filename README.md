@@ -265,7 +265,11 @@ npm run build
 
 Then deploy the `dist/` directory.
 
-Production runs as a Docker container (`Dockerfile`, `docker-entrypoint.sh`) on black-panther's `apps-stack`. It serves the static site on port 80 and runs the order service, which needs `MERCHANT_NSEC` and `LIGHTNING_ADDRESS`, plus the event archiver, which needs only `MERCHANT_NPUB`. Mount a volume at `/data/backups` so the archive survives rebuilds:
+Production runs as a Docker container (`Dockerfile`, `docker-entrypoint.sh`) on black-panther's `apps-stack`. It serves the static site on port 80 and runs the order service, which needs `MERCHANT_NSEC` (plus `LIGHTNING_ADDRESS` to take payments), and the event archiver, which needs only `MERCHANT_NPUB`.
+
+If `LIGHTNING_ADDRESS` is empty or its backend (e.g. LNbits) is down, the order service keeps running instead of exiting. It probes `https://<domain>/.well-known/lnurlp/<name>` every minute (`order-service/lib/lightningHealth.js`), holds Gamma orders until Lightning recovers, and writes `dist/payments-status.json` (`{"lightning":"ok"|"unavailable","checkedAt":"..."}`; override the path with `PAYMENTS_STATUS_PATH`). The Gamma checkout reads that file to show "Lightning payments are temporarily unavailable" and disable Place Order. A missing file never blocks buying.
+
+Mount a volume at `/data/backups` so the archive survives rebuilds:
 
 ```bash
 docker build -t eden-weeks-art .

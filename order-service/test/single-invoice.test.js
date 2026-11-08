@@ -36,7 +36,7 @@ import { randomBytes } from 'node:crypto';
 process.env.MERCHANT_NSEC ||= 'nsec-test-placeholder';
 process.env.LIGHTNING_ADDRESS ||= 'eden@example.com';
 
-const { handleOrder } = await import('../index.js');
+const { handleOrder, retryPendingOrders } = await import('../index.js');
 
 // A recognisable BOLT11 the injected provider returns. The test asserts THIS
 // exact string is the one embedded in the payment-request event (the invoice the
@@ -145,7 +145,10 @@ beforeEach(() => {
 
 test('generateInvoice is called exactly once for a single order', async () => {
   const order = buildOrderRumor();
-  await handleOrder(order, nostrClient, { generateInvoice: generateInvoiceSpy, store });
+  await handleOrder(order, nostrClient, {
+    generateInvoice: generateInvoiceSpy,
+    store,
+  });
 
   assert.equal(
     generateInvoiceSpy.calls.length,
@@ -160,7 +163,10 @@ test('generateInvoice is called exactly once for a single order', async () => {
 
 test('the kind-16 card and the kind-14 note both carry the IDENTICAL invoice generateInvoice returned', async () => {
   const order = buildOrderRumor();
-  await handleOrder(order, nostrClient, { generateInvoice: generateInvoiceSpy, store });
+  await handleOrder(order, nostrClient, {
+    generateInvoice: generateInvoiceSpy,
+    store,
+  });
 
   // The kind-16 Type 2 payment-request card.
   const cards = giftWrapsOfKind(nostrClient, 16);
@@ -195,7 +201,10 @@ test('the kind-16 card and the kind-14 note both carry the IDENTICAL invoice gen
 
 test('the kind-14 note carries the SAME ["order", id] tag as the kind-16 card (correlatable/dedupable)', async () => {
   const order = buildOrderRumor();
-  await handleOrder(order, nostrClient, { generateInvoice: generateInvoiceSpy, store });
+  await handleOrder(order, nostrClient, {
+    generateInvoice: generateInvoiceSpy,
+    store,
+  });
 
   const card = giftWrapsOfKind(nostrClient, 16)[0].rumor;
   const note = giftWrapsOfKind(nostrClient, 14)[0].rumor;
@@ -214,7 +223,10 @@ test('the kind-14 note carries the SAME ["order", id] tag as the kind-16 card (c
 test('exactly two gift wraps (one kind-16, one kind-14) go to the buyer, and NO kind-4 NIP-04 DM is used', async () => {
   const buyerPubkey = randomPubkey();
   const order = buildOrderRumor({ buyerPubkey });
-  await handleOrder(order, nostrClient, { generateInvoice: generateInvoiceSpy, store });
+  await handleOrder(order, nostrClient, {
+    generateInvoice: generateInvoiceSpy,
+    store,
+  });
 
   assert.equal(
     nostrClient.giftWraps.length,
@@ -233,10 +245,16 @@ test('exactly two gift wraps (one kind-16, one kind-14) go to the buyer, and NO 
 
 test('a duplicate order is skipped — no second invoice and no further gift wraps', async () => {
   const order = buildOrderRumor();
-  await handleOrder(order, nostrClient, { generateInvoice: generateInvoiceSpy, store });
+  await handleOrder(order, nostrClient, {
+    generateInvoice: generateInvoiceSpy,
+    store,
+  });
   // Replay the exact same order (same order id) — the persistent dedup store
   // must short-circuit it, so no further invoice is generated and nothing resent.
-  await handleOrder(order, nostrClient, { generateInvoice: generateInvoiceSpy, store });
+  await handleOrder(order, nostrClient, {
+    generateInvoice: generateInvoiceSpy,
+    store,
+  });
 
   assert.equal(
     generateInvoiceSpy.calls.length,
@@ -248,4 +266,63 @@ test('a duplicate order is skipped — no second invoice and no further gift wra
     2,
     'a replayed order must not send any further gift wraps (still just the original card + note)'
   );
+});
+
+test('Lightning down: the order is held, not invoiced and not marked processed', async () => {
+  const order = buildOrderRumor();
+  const orderId = tagValue(order, 'order');
+  const pending = new Map();
+  await handleOrder(order, nostrClient, {
+    generateInvoice: generateInvoiceSpy,
+    store,
+    isLightningHealthy: () => false,
+    pending,
+  });
+
+  assert.equal(generateInvoiceSpy.calls.length, 0, 'no invoice while Lightning is down');
+  assert.equal(nostrClient.giftWraps.length, 0, 'nothing sent');
+  assert.equal(store.hasOrder(orderId), false, 'not marked processed, so it is retried');
+  assert.equal(pending.size, 1, 'held for retry');
+
+  // Recovery: the held order is invoiced exactly once, even if the same order
+  // also arrives again while the retry's invoice request is in flight.
+  const healthy = {
+    generateInvoice: generateInvoiceSpy,
+    store,
+    isLightningHealthy: () => true,
+    pending,
+  };
+  const handled = [];
+  retryPendingOrders(nostrClient, {
+    pending,
+    handle: (event, client) => {
+      const p = handleOrder(event, client, healthy);
+      handled.push(p);
+      return p;
+    },
+  });
+  await new Promise((r) => setImmediate(r));
+  handled.push(handleOrder(order, nostrClient, healthy));
+  await Promise.all(handled);
+
+  assert.equal(pending.size, 0);
+  assert.equal(generateInvoiceSpy.calls.length, 1, 'invoiced exactly once on recovery');
+  assert.equal(giftWrapsOfKind(nostrClient, 16).length, 1);
+  assert.equal(store.hasOrder(orderId), true);
+});
+
+test('Lightning fails mid-order: a failed probe holds the order for retry', async () => {
+  const order = buildOrderRumor();
+  const pending = new Map();
+  await handleOrder(order, nostrClient, {
+    generateInvoice: async () => {
+      throw new Error('fetch failed');
+    },
+    store,
+    recheckLightning: async () => false,
+    pending,
+  });
+  assert.equal(nostrClient.giftWraps.length, 0);
+  assert.equal(store.hasOrder(tagValue(order, 'order')), false);
+  assert.equal(pending.size, 1);
 });
